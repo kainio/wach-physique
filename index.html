@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wach?! — plateau</title>
+<meta name="description" content="Le bluff du café marocain : compagnon numérique du jeu de cartes physique.">
+<meta name="theme-color" content="#C85B1D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Wach?! plateau">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@500;700&family=Hanken+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--zel:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.10' stroke-width='1.2'%3E%3Crect x='10' y='10' width='36' height='36'/%3E%3Crect x='10' y='10' width='36' height='36' transform='rotate(45 28 28)'/%3E%3Ccircle cx='28' cy='28' r='6'/%3E%3C/g%3E%3C/svg%3E");--saf:#F4B400;--saf-d:#B98600}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:#C85B1D;color:#F1E7D5;font-family:'Hanken Grotesk',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:linear-gradient(90deg,#C85B1D 0 50%,#6CA68F 50% 100%);padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+main{max-width:520px;min-height:100vh;margin:0 auto;padding:36px 22px 28px;display:flex;flex-direction:column;gap:14px;justify-content:center}
+h1{margin:0;text-align:center;font-family:'Reem Kufi',sans-serif;font-weight:700;font-size:clamp(68px,22vw,104px);line-height:.9;color:#F1E7D5;text-shadow:0 4px 0 #0006}
+h1 span{display:inline-block;color:#140908;transform:rotate(-8deg) translateY(-4px)}
+.sub{text-align:center;opacity:.8;font-weight:600;margin:-4px 0 14px}
+.go{display:flex;flex-direction:column;gap:3px;padding:18px 20px;border-radius:18px;background:#F1E7D5;color:#140908;text-decoration:none;font-family:'Reem Kufi',sans-serif;font-weight:700;font-size:26px;box-shadow:0 5px 0 #C39162;transition:transform .1s,box-shadow .1s}
+.go small{font:600 13px 'Hanken Grotesk',sans-serif;opacity:.8}
+.go:active{transform:translateY(4px);box-shadow:0 1px 0 #C39162}
+.go:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.alt{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;font-size:14px;font-weight:600}
+.alt a{color:#F1E7D5;opacity:.9}
+button{font:inherit;color:inherit;border:0;cursor:pointer;min-height:50px;border-radius:16px;background:#14090840;font-weight:700;font-size:16px}
+#inst[hidden]{display:none}
+#off{text-align:center;font-size:12px;opacity:.7;min-height:16px;margin:0}
+@media (hover:hover){.go:hover{filter:brightness(1.06)}button:hover{filter:brightness(1.15)}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Wach<span>?!</span></h1>
+  <p class="sub">Compagnon du jeu physique</p>
+  <a class="go" href="1v1.html">1 contre 1<small>Table physique · Light, Standard, Kbira, Café</small></a>
+  <a class="go" href="multi.html">3 et 4 joueurs<small>1v1v1 · 1v1v1v1 · 2v2</small></a>
+  <div class="alt"><a href="simple-1v1.html">Version simple 1v1</a><a href="simple-multi.html">Version simple 3 et 4 joueurs</a></div>
+  <button id="inst" hidden>Installer l’app</button>
+  <p id="off"></p>
+</main>
+<script>
+(function(){
+  var ip=null,b=document.getElementById('inst'),off=document.getElementById('off');
+  var standalone=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
+  var ios=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();ip=e;if(!standalone)b.hidden=false;});
+  window.addEventListener('appinstalled',function(){b.hidden=true;});
+  if(ios&&!standalone){b.hidden=false;}
+  b.addEventListener('click',function(){
+    if(ip){ip.prompt();ip.userChoice.then(function(){ip=null;b.hidden=true;});}
+    else{alert('Touche Partager, puis « Sur l’écran d’accueil ».');}
+  });
+  if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){
+    navigator.serviceWorker.register('sw.js').then(function(){return navigator.serviceWorker.ready;})
+      .then(function(){off.textContent='Disponible hors ligne';}).catch(function(){});
+  }
+})();
+</script>
+</body>
+</html>

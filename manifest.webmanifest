@@ -1,0 +1,63 @@
+{
+  "name": "Wach?! — plateau",
+  "short_name": "Wach?! plateau",
+  "description": "Compagnon numérique du plateau physique de Wach?! (1v1, 3 et 4 joueurs).",
+  "lang": "fr",
+  "id": "plateau",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1c110c",
+  "theme_color": "#C85B1D",
+  "categories": [
+    "games",
+    "entertainment"
+  ],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "1 contre 1",
+      "short_name": "1v1",
+      "url": "./1v1.html",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "3 et 4 joueurs",
+      "short_name": "3-4 joueurs",
+      "url": "./multi.html",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}
