@@ -754,6 +754,30 @@ table.sum small{display:block;color:var(--mute);font-weight:400;font-size:calc(1
 .he .hp{color:var(--mint);font-weight:700}
 .he .hn{color:var(--mute);font-style:italic}
 
+/* ===== indicateur d'ordre de résolution : coin haut-droit, fond couleur du joueur ===== */
+.flip .ord,.rs .flip .ord,.quad .rs .flip .ord{left:auto !important;right:calc(-6*var(--u)) !important;top:calc(-8*var(--u)) !important;background:var(--tc,var(--saf));color:#140908;border:calc(1.5*var(--u)) solid #00000066;box-shadow:0 calc(1*var(--u)) calc(3*var(--u)) #0009;z-index:6}
+.quad .rs .flip .ord{right:-10% !important;top:-12% !important}
+
+/* ===== manuel du joueur ===== */
+#man{position:absolute;inset:0;z-index:47;background:var(--bg);color:var(--fg);display:flex;flex-direction:column}
+#man header{display:flex;align-items:center;gap:calc(10*var(--u));padding:calc(14*var(--u)) calc(16*var(--u)) calc(6*var(--u))}
+#man h2{margin:0;flex:1;font-family:'Reem Kufi',sans-serif;font-size:calc(28*var(--u));line-height:1.1}
+#man .mx{width:calc(42*var(--u));height:calc(42*var(--u));border-radius:calc(13*var(--u));background:var(--panel2);color:var(--fg);font-size:calc(20*var(--u));font-weight:700}
+#man nav{display:flex;gap:calc(6*var(--u));overflow-x:auto;padding:calc(6*var(--u)) calc(14*var(--u)) calc(10*var(--u));scrollbar-width:none;flex:none}
+#man nav::-webkit-scrollbar{display:none}
+#man nav button{flex:none;padding:calc(9*var(--u)) calc(15*var(--u));border-radius:calc(18*var(--u));background:var(--panel2);color:var(--fg);font-weight:700;font-size:calc(14*var(--u));white-space:nowrap}
+#man nav button[aria-selected=true]{background:var(--fg);color:var(--bg)}
+#man .mb{flex:1;overflow:auto;padding:calc(2*var(--u)) calc(18*var(--u)) calc(30*var(--u));-webkit-overflow-scrolling:touch}
+#man .mbi{max-width:calc(660*var(--u));margin:0 auto}
+#man h3{font-family:'Reem Kufi',sans-serif;font-size:calc(21*var(--u));margin:calc(20*var(--u)) 0 calc(6*var(--u));line-height:1.15}
+#man h3:first-child{margin-top:calc(6*var(--u))}
+#man p,#man li{font-size:calc(15*var(--u));line-height:1.5;margin:calc(6*var(--u)) 0}
+#man ul,#man ol{padding-left:calc(22*var(--u));margin:calc(6*var(--u)) 0}
+#man table{width:100%;border-collapse:collapse;margin:calc(8*var(--u)) 0 calc(12*var(--u));font-size:calc(14*var(--u))}
+#man th{text-align:left;color:var(--mute);font-weight:700;font-size:calc(12*var(--u));padding:calc(5*var(--u)) calc(6*var(--u));border-bottom:calc(2*var(--u)) solid var(--line)}
+#man td{padding:calc(8*var(--u)) calc(6*var(--u));border-bottom:calc(1*var(--u)) solid var(--line);vertical-align:top;line-height:1.35}
+#man .note{background:var(--panel2);border-left:calc(4*var(--u)) solid var(--saf-d,#C39162);padding:calc(10*var(--u)) calc(12*var(--u));border-radius:calc(10*var(--u));margin:calc(10*var(--u)) 0;font-size:calc(14*var(--u));line-height:1.45}
+
 
 :root{--u:calc(1*var(--u));--wf:1}
 #app{max-width:calc(480*var(--u)*var(--wf,1))}
@@ -2812,6 +2836,212 @@ openSheet=function(html,mid){
     else if(html.indexOf('id="sAgain"')>0){const r=sc.querySelector('.row');r.parentNode.insertBefore(mk(),r);}
   }catch(e){}
 };
+
+/* =====================================================================
+   MANUEL DU JOUEUR — accessible depuis l'accueil (et le menu pause), un onglet par module
+   ===================================================================== */
+const MAN_TABS=[
+ {id:'base',t:'Bases',h:`
+<h3>Le jeu en 30 secondes</h3>
+<p>À chaque tour, chaque joueur pose une carte en secret sur l’une des deux zones du plateau : le <b>Souk</b> (le volume) ou la <b>Médina</b> (les cris). Les cartes sont retournées ensemble. La plus haute valeur résout en premier. Une carte de même valeur qu’une carte de la zone la capture. En fin de manche, la plus grosse pile gagne le jeton <b>Moul Souk</b>.</p>
+<h3>Matériel</h3>
+<ul><li>40 cartes espagnoles : As à 7, puis 10, 11, 12 (sans 8 ni 9).</li>
+<li>Un plateau : Souk, Médina, coin Ronda.</li>
+<li>Jetons de 1 point (pois chiches) et 7bl, le bâtonnet qui vaut 5 points.</li>
+<li>14 jetons de couleur par joueur, un jeton Moul Souk (+3, +4 ou +5), un jeton de Donneur, un sablier de 15 s (facultatif).</li></ul>
+<h3>Mise en place</h3>
+<ol><li><b>Le Donneur.</b> Chacun coupe le paquet : la carte la plus haute désigne le Donneur. Égalité : on recommence.</li>
+<li><b>La donne.</b> Le Donneur mélange et donne 4 cartes à chacun, face cachée.</li>
+<li><b>La table.</b> Il pose des cartes face visible, toutes au Souk (4 à deux joueurs, 6 à trois ou quatre). La Médina est vide.</li>
+<li><b>Le paquet du Donneur.</b> Il met de côté les cartes des distributions ; le reste est écarté, face cachée, sans être regardé.</li>
+<li><b>Les jetons.</b> Banque au centre, jeton Moul Souk au centre, jetons de couleur devant chacun. Tout le monde part de zéro.</li></ol>
+<h3>Un tour</h3>
+<ol><li><b>Sélection.</b> Je choisis ma carte en secret.</li>
+<li><b>Pose.</b> « 3, 2, 1 » : la carte, face cachée, va dans la zone neutre ; puis je la glisse sur ma zone.</li>
+<li><b>Révélation.</b> « Wach ! » : on retourne ensemble.</li>
+<li><b>Résolution.</b> Dans l’ordre d’initiative.</li>
+<li><b>Fin de tour.</b> On passe au suivant.</li></ol>
+<div class="note"><b>Dans l’app.</b> Touche une carte, puis « Poser » (ou glisse-la sur le plateau). Elle est scellée dans la zone neutre : on ne la reprend plus. Glisse-la ensuite vers le Souk ou la Médina, puis tout le monde se révèle d’un coup.</div>
+<h3>Qui résout en premier ?</h3>
+<p>La carte de plus haute valeur résout en premier : <b>12 · 11 · 10 · 7 · 6 · 5 · 4 · 3 · 2 · 1</b>. À valeur égale, le Donneur résout en dernier. Au dernier tour, le Donneur résout toujours en dernier. Les deux zones se résolvent chacune de leur côté.</p>
+<h3>Capturer</h3>
+<p><b>Capture directe, obligatoire.</b> Si votre carte a la même valeur qu’une ou plusieurs cartes de sa zone, vous ramassez toutes les cartes de cette valeur.</p>
+<p><b>Chaîne, automatique.</b> Vous ramassez aussi les cartes des valeurs immédiatement supérieures dans la suite <b>1 → 2 → 3 → 4 → 5 → 6 → 7 → 10 → 11 → 12</b>, sur 2 marches au plus. Jamais vers le bas. Un trou dans la suite arrête la chaîne.</p>
+<p>Au Souk, les cartes ramassées vont dans votre pile. En Médina, elles sortent du jeu (sauf le trio d’une Tringa). Sans capture, votre carte reste face visible dans sa zone et devient capturable par tous.</p>
+<h3>Souk et Médina</h3>
+<table><tr><th></th><th>Souk</th><th>Médina</th></tr>
+<tr><td>On y cherche</td><td>remplir sa pile</td><td>annoncer</td></tr>
+<tr><td>Une capture</td><td>va dans votre pile</td><td>sort du jeu</td></tr>
+<tr><td>2 cartes identiques</td><td>capture ordinaire</td><td>Ronda +2</td></tr>
+<tr><td>3 cartes identiques</td><td>capture ordinaire</td><td>Tringa +3</td></tr>
+<tr><td>Bonus de zone</td><td>Missa +1 (vider le Souk)</td><td>—</td></tr>
+<tr><td>Plafond</td><td>—</td><td>6 points d’annonces par joueur et par manche</td></tr>
+<tr><td>Jetons de couleur</td><td>inutiles</td><td>sur toutes vos cartes libres</td></tr></table>
+<h3>Ronda et Tringa (Médina seulement)</h3>
+<p><b>Ronda +2.</b> Votre 1ʳᵉ carte reste en Médina sous votre jeton. À un tour ultérieur, votre 2ᵉ carte identique, jouée en Médina, la capture : « Ronda ! » La paire se gare au coin Ronda. Si l’adversaire capture votre carte libre avant, votre Ronda est perdue.</p>
+<p><b>Tringa +3.</b> Votre 3ᵉ carte identique, jouée en Médina, avec la paire garée : « Tringa ! » Le trio rejoint votre pile.</p>
+<p><b>Plafond.</b> 6 points d’annonces au plus par joueur et par manche. Au-delà, la Tringa ne rapporte rien mais le trio est quand même ramassé.</p>
+<h3>Jeu défensif en Médina</h3>
+<p>Capturer la carte libre d’un adversaire en Médina ne rapporte rien, mais lui coûte sa Ronda en préparation.</p>
+<div class="note">Vous avez une Ronda en place et un autre joueur a déjà posé une carte de même valeur en Médina : votre 4ᵉ carte la capture. <b>Les deux cartes sortent du jeu et la Tringa n’est pas complétée</b> ; votre paire reste au coin Ronda. Avec le module Échanges, c’est vrai aussi quand cette carte est jouée au même tour : l’échange a lieu et les deux cartes sortent.</div>
+<h3>Distributions du Donneur</h3>
+<p>Aux tours indiqués par le format, le Donneur donne 2 cartes à chaque joueur, prises dans son paquet. Personne ne se sert seul.</p>
+<h3>Fin de manche : le décompte</h3>
+<p><b>Déjà acquis.</b> Rondas, Tringas et Missas sont déjà dans vos jetons. <b>Qaa</b> (module). <b>Moul Souk</b> : la plus grosse pile prend le jeton et marque sa valeur ; égalité au sommet : personne.</p>
+<p><b>Lecture d’un score :</b> 5 × 7bl + jetons. Dès que vous avez 5 jetons devant vous, échangez-les contre une 7bl. On ne retire jamais de points.</p>
+<h3>Gagner</h3>
+<p>Une manche par joueur : 2 manches à deux, 3 à trois, 4 à quatre. Le Donneur tourne : chacun donne une fois. Le score cumulé le plus élevé gagne. Égalité parfaite : une manche de départage.</p>`},
+ {id:'formats',t:'Formats',h:`
+<h3>Choisir son format</h3>
+<p>Tous les formats partagent les mêmes règles : on ne change que la durée, les distributions et le jeton Moul Souk.</p>
+<table><tr><th>Format</th><th>Tours</th><th>Distributions</th><th>Moul Souk</th><th>Match</th></tr>
+<tr><td>Coup du Café</td><td>6</td><td>tours 3, 5</td><td>+3</td><td>1 manche</td></tr>
+<tr><td>Light</td><td>8</td><td>tours 3, 5, 7</td><td>+4</td><td>2 manches</td></tr>
+<tr><td>Standard</td><td>12</td><td>tours 3, 5, 7, 9, 11</td><td>+5</td><td>2 manches</td></tr>
+<tr><td>Kbira</td><td>14</td><td>tours 3, 5, 7, 9, 11</td><td>+5</td><td>2 manches</td></tr></table>
+<div class="note"><b>Première partie ?</b> Joue Light, sans module. Les modules s’ajoutent ensuite, un seul à la fois.</div>
+<h3>Kbira (14 tours)</h3>
+<p>On joue toutes ses cartes : les mains finissent vides. Votre dernière carte est un secret à planifier. Avec Échanges, on ne peut surenchérir que si l’on garde assez de cartes pour les tours restants.</p>
+<h3>Plusieurs joueurs</h3>
+<p>À trois ou à quatre : 6 tours, distributions aux tours 3 et 5, jeton Moul Souk +3 (à quatre joueurs en 2 contre 2 : +4). Voir l’onglet « À plusieurs ».</p>`},
+ {id:'qaa',t:'Qaa',h:`
+<h3>Qaa : le dernier mot du Donneur</h3>
+<p>Au dernier tour, si la carte du Donneur <b>capture</b>, il marque <b>+2</b>.</p>
+<ul><li>Le Donneur résout toujours en dernier au dernier tour : il choisit sa zone en sachant ce qu’il reste.</li>
+<li>Compte comme capture : une capture directe ou en chaîne, une Ronda, une Tringa, ou une enchère d’échange gagnée par sa carte.</li>
+<li>Une carte qui reste libre ne rapporte rien.</li>
+<li>Avec le Baroud, le Qaa se juge sur la dernière carte résolue du Donneur.</li></ul>
+<div class="note">Le Qaa est ajouté au décompte de fin de manche, avant le Moul Souk. Il n’est pas soumis au plafond de 6 points.</div>`},
+ {id:'echanges',t:'Échanges',h:`
+<h3>Un duel d’enchères</h3>
+<p>Quand deux joueurs révèlent la <b>même valeur dans la même zone</b> et que la <b>première carte reste libre</b> (elle n’a rien capturé, pas même par Ronda), un échange s’ouvre au lieu de la capture ordinaire.</p>
+<table><tr><th>Cri</th><th>Cartes</th><th>Points</th></tr>
+<tr><td>Bouahd</td><td>la 2ᵉ carte posée</td><td>+1</td></tr>
+<tr><td>Btlata</td><td>une 3ᵉ carte identique</td><td>+3</td></tr>
+<tr><td>Bkhmsa</td><td>une 4ᵉ carte, la dernière</td><td>+5</td></tr></table>
+<ul><li>Le deuxième résolveur crie <b>Bouahd</b>. Le premier peut alors <b>abattre</b> de sa main une 3ᵉ carte identique (<b>Btlata</b>) ; le deuxième peut répondre avec la 4ᵉ (<b>Bkhmsa</b>).</li>
+<li>Le dernier mot l’emporte : seuls ses points comptent, et il ramasse toutes les cartes de l’échange.</li>
+<li>Au Souk, ces cartes vont dans sa pile. En Médina, elles sortent du jeu.</li>
+<li>Les points d’échange sont hors plafond. Les cartes d’un échange ne font jamais de Ronda ni de Tringa.</li>
+<li>Chaque carte abattue est compensée par une carte de la Réserve (5 cartes à trois joueurs et en duel, 1 carte à quatre).</li></ul>
+<div class="note"><b>Dans l’app.</b> Une invite de 8 secondes te propose de surenchérir quand tu peux abattre une carte.</div>
+<h3>Cas particuliers</h3>
+<ul><li><b>Ronda en place.</b> Si tu as une paire garée et qu’un adversaire joue la même valeur au même tour, l’échange a lieu : ta carte compte comme libre, les deux cartes sortent du jeu, et la Tringa n’est pas complétée.</li>
+<li><b>À trois joueurs.</b> Une 3ᵉ carte identique révélée au même tour est un Btlata automatique pour son joueur.</li>
+<li><b>2 contre 2.</b> Les échanges n’ont lieu qu’entre adversaires.</li></ul>`},
+ {id:'makla',t:'Makla',h:`
+<h3>Votre pile reste en jeu</h3>
+<p>Votre pile n’est plus cachée : elle reste au Souk, <b>coiffée, face visible, par la dernière carte ajoutée</b>. Quiconque capture cette carte au Souk emporte <b>la pile entière</b>.</p>
+<ul><li><b>Refroidissement.</b> Une pile qui vient de grossir ne peut pas être prise pendant ce tour. Elle devient vulnérable au tour suivant.</li>
+<li><b>Se protéger.</b> Ajouter une carte plus haute change la carte du dessus, donc la valeur à viser.</li>
+<li><b>Les chaînes mordent dans les piles.</b> Une pile coiffée d’une valeur de la suite sert de marche (2 marches au plus) et part avec la chaîne.</li>
+<li>Une Tringa et le butin d’un échange rejoignent votre pile et la coiffent. Une Ronda garée n’est jamais volable.</li>
+<li>Les points déjà marqués ne se volent pas : seules les cartes changent de pile. On ne vole pas sa propre pile.</li></ul>
+<h3>Jeton Moul Souk</h3>
+<p>+5 en duel Standard et en 2 contre 2, +4 à quatre joueurs sans Baroud, +3 à trois joueurs.</p>`},
+ {id:'baroud',t:'Baroud',h:`
+<h3>Huit cartes d’action</h3>
+<p>Ce sont les 8 et les 9 du jeu. Chaque joueur en reçoit des cartes, qu’il joue <b>glissées sous sa carte du tour</b> (une seule par tour), face cachée jusqu’à la révélation. Pour le marquer, le jeu passe au <b>jeu français</b> (♠ ♥ ♦ ♣, A, J, Q, K).</p>
+<table><tr><th>Carte</th><th>Effet</th></tr>
+<tr><td><b>Zerba</b> · 8♣</td><td>Tu résous en premier.</td></tr>
+<tr><td><b>Sber</b> · 8♥</td><td>Tu résous en dernier.</td></tr>
+<tr><td><b>Qontra</b> · 8♠</td><td>Annule la Baroud adverse (se résout avant tout). Deux Qontra qui se visent s’annulent.</td></tr>
+<tr><td><b>Kelma</b> · 8♦</td><td>Annonce une valeur (pas au dernier tour). Capture-la plus tard : +1 (à trois : +3). Sinon l’adversaire marque +2 (à trois : +1 chacun).</td></tr>
+<tr><td><b>Aoud</b> · 9♣</td><td>Deux cartes ce tour, +1 carte de la Réserve.</td></tr>
+<tr><td><b>Fal</b> · 9♥</td><td>Regarde 3 cartes écartées.</td></tr>
+<tr><td><b>Khatf</b> · 9♠</td><td>Après ta carte, prends une carte libre du plateau (jamais une carte d’échange).</td></tr>
+<tr><td><b>Chergui</b> · 9♦</td><td>En fin de tour (pas au dernier), toutes les cartes libres d’une zone glissent vers l’autre.</td></tr></table>
+<h3>Poudre et mèches</h3>
+<ul><li>En duel : 2 cartes Baroud chacun et 3 jetons de poudre. Une mèche se paie avec ses jetons, dans la <b>Poudrière</b> : Aoud 1, Khatf 1, Chergui 1, les autres sont gratuites. Une Baroud impayable ne peut pas être jouée.</li>
+<li>Fin de manche : le plus riche prend la Poudrière. Égalité : le pot est reporté.</li>
+<li>Kelma est évaluée au décompte, avant le Moul Souk.</li></ul>
+<h3>À trois et à quatre</h3>
+<ul><li><b>À trois.</b> 1 carte chacune parmi les 8, 3 jetons de poudre, Poudrière. Mèches : Khatf 2, Aoud 1, Fal 1, Chergui 1. Qontra vise la Baroud d’un adversaire au choix.</li>
+<li><b>À quatre.</b> 6 cartes (sans Aoud ni Fal), 1 chacune, mèches gratuites, pas de Poudrière. Kelma : +1 si tenue, +2 à chaque adversaire sinon.</li>
+<li>Moul Souk : il garde la valeur du jeu de base avec le Baroud.</li></ul>`},
+ {id:'multi',t:'À plusieurs',h:`
+<h3>À trois ou à quatre joueurs</h3>
+<ul><li><b>Plateau.</b> 6 cartes au Souk, 4 cartes par joueur, distributions de 2 cartes aux tours 3 et 5, 6 tours.</li>
+<li><b>Chacun pour soi</b> (3 ou 4 joueurs) ou <b>2 contre 2</b> : une pile commune par équipe, un plafond de 6 points d’annonces par joueur.</li>
+<li><b>Initiative.</b> À valeur égale, le premier à résoudre est celui qui suit le Donneur dans le sens inverse des aiguilles d’une montre. Le Donneur reste dernier. Le numéro sur chaque joueur indique sa priorité.</li>
+<li><b>Moul Souk.</b> +3 à trois et à quatre joueurs, +4 en 2 contre 2.</li>
+<li>Une manche par joueur : 3 manches à trois, 4 manches à quatre.</li></ul>
+<h3>Le plateau à quatre côtés</h3>
+<p>Chaque type de zone est divisé en deux parties : la <b>Médina</b> (haut gauche et bas droite) et le <b>Souk</b> (haut droite et bas gauche). Devant chaque joueur : une partie de Médina et une partie de Souk.</p>
+<ul><li>Tu glisses ta carte de la zone neutre vers le <b>type</b> de zone voulu.</li>
+<li>Une carte libre est déposée sur la partie de ce type qui est devant toi.</li>
+<li>Si une capture est possible dans l’une des deux parties du même type (devant toi ou plus loin), elle se fait normalement.</li>
+<li>À trois joueurs, une place reste libre.</li></ul>
+<h3>2 contre 2</h3>
+<ul><li>Les partenaires sont face à face. La Ronda se fait avec ses propres cartes, jouées en Médina à deux tours différents.</li>
+<li>Capturer la carte de son partenaire est une capture ordinaire.</li>
+<li>Les échanges n’ont lieu qu’entre adversaires.</li>
+<li>Jeton Moul Souk +4 (+5 en Makla sans Baroud).</li></ul>`},
+ {id:'aide',t:'Aide-mémoire',h:`
+<h3>Ce qui rapporte</h3>
+<table><tr><th>Quoi</th><th>Points</th><th>Où</th></tr>
+<tr><td>Ronda</td><td>+2</td><td>Médina</td></tr>
+<tr><td>Tringa</td><td>+3</td><td>Médina</td></tr>
+<tr><td>Plafond d’annonces</td><td>6 par joueur et par manche</td><td>Médina</td></tr>
+<tr><td>Missa : vider le Souk</td><td>+1</td><td>Souk</td></tr>
+<tr><td>Qaa : la carte du Donneur capture au dernier tour</td><td>+2</td><td>dernier tour</td></tr>
+<tr><td>Moul Souk : la plus grosse pile</td><td>valeur du jeton</td><td>fin de manche</td></tr>
+<tr><td>Échanges (module)</td><td>+1 · +3 · +5</td><td>Médina ou Souk</td></tr></table>
+<h3>Ordres à retenir</h3>
+<p><b>Valeurs :</b> 12 · 11 · 10 · 7 · 6 · 5 · 4 · 3 · 2 · 1.</p>
+<p><b>Chaîne :</b> 1 → 2 → 3 → 4 → 5 → 6 → 7 → 10 → 11 → 12, deux marches, jamais vers le bas.</p>
+<p><b>Score :</b> 5 jetons = une 7bl.</p>`}
+];
+const MAN={tab:'base'};
+function Mopen(tab){
+  if(tab)MAN.tab=tab;
+  let el=document.getElementById('man');
+  if(!el){el=document.createElement('div');el.id='man';el.setAttribute('role','dialog');el.setAttribute('aria-label','Manuel du joueur');document.getElementById('app').appendChild(el);}
+  const draw=()=>{
+    const cur=MAN_TABS.find(x=>x.id===MAN.tab)||MAN_TABS[0];
+    el.innerHTML='<header><h2>Manuel du joueur</h2><button class="mx" id="manX" aria-label="Fermer">✕</button></header>'
+      +'<nav role="tablist" aria-label="Modules">'+MAN_TABS.map(x=>`<button role="tab" id="mt-${x.id}" data-t="${x.id}" aria-selected="${x.id===cur.id}" aria-controls="mp">${x.t}</button>`).join('')+'</nav>'
+      +'<div class="mb" id="mp" role="tabpanel" tabindex="0" aria-labelledby="mt-'+cur.id+'"><div class="mbi">'+cur.h+'</div></div>';
+    el.querySelector('#manX').onclick=()=>el.remove();
+    el.querySelectorAll('[role=tab]').forEach(b=>{
+      b.onclick=()=>{MAN.tab=b.dataset.t;draw();const s=el.querySelector('[aria-selected=true]');if(s&&s.scrollIntoView)s.scrollIntoView({inline:'center',block:'nearest'});};
+      b.onkeydown=e=>{
+        const i=MAN_TABS.findIndex(x=>x.id===MAN.tab);let j=i;
+        if(e.key==='ArrowRight')j=(i+1)%MAN_TABS.length;else if(e.key==='ArrowLeft')j=(i-1+MAN_TABS.length)%MAN_TABS.length;else return;
+        e.preventDefault();MAN.tab=MAN_TABS[j].id;draw();const nb=el.querySelector('#mt-'+MAN.tab);if(nb){nb.focus();if(nb.scrollIntoView)nb.scrollIntoView({inline:'center',block:'nearest'});}
+      };
+    });
+    const s=el.querySelector('[aria-selected=true]');if(s&&s.scrollIntoView)try{s.scrollIntoView({inline:'center',block:'nearest'});}catch(x){}
+  };
+  draw();
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){const m=document.getElementById('man');if(m)m.remove();}});
+/* accès : accueil + menu pause */
+(function(){
+  const _rh=renderHome;
+  renderHome=function(){
+    _rh();
+    const t=document.querySelector('#tuto');if(!t||document.getElementById('manBtn'))return;
+    const b=document.createElement('button');b.className='btn';b.id='manBtn';b.textContent='Manuel du joueur';
+    b.onclick=()=>Mopen();
+    t.parentNode.insertBefore(b,t);
+  };
+  const _os=openSheet;
+  openSheet=function(html,mid){
+    _os(html,mid);
+    try{
+      if(html.indexOf('<h2>Pause</h2>')===0){
+        const sc=document.querySelector('#sheet .sc'),x=sc&&sc.querySelector('.xbtns');
+        if(x&&!sc.querySelector('#manBtn2')){
+          const b=document.createElement('button');b.className='btn';b.id='manBtn2';b.style.cssText='width:100%;background:var(--panel2);color:var(--fg);margin-bottom:10px';b.textContent='Manuel du joueur';
+          b.onclick=()=>Mopen();sc.insertBefore(b,x);
+        }
+      }
+    }catch(e){}
+  };
+  const h=document.getElementById('home');
+  if(h&&h.classList.contains('on'))renderHome();
+})();
 
 /* =====================================================================
    PWA : bouton « Installer l’app » + retour au menu principal
