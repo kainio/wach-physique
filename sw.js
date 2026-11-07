@@ -1,5 +1,5 @@
 /* Wach?! plateau — service worker : hors ligne après la première visite */
-const V='wach-plateau-v1';
+const V='wach-plateau-v2';
 const PRE=['./','index.html','1v1.html','multi.html','simple-1v1.html','simple-multi.html','manifest.webmanifest',
   'icons/icon-192.png','icons/icon-512.png','icons/maskable-512.png','icons/apple-touch-icon.png','icons/favicon.png'];
 self.addEventListener('install',e=>{
