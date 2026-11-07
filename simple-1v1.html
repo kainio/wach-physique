@@ -238,6 +238,12 @@ table.sum small{display:block;color:var(--mute);font-weight:400;font-size:calc(1
 }
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 
+/* ===== jeu français ===== */
+#app[data-deck="fr"] .card.sC,#app[data-deck="fr"] .card.sD,#app[data-deck="fr"] .gpair .mc.sC,#app[data-deck="fr"] .gpair .mc.sD,#app[data-deck="fr"] .bcard .bk.sC,#app[data-deck="fr"] .bcard .bk.sD{--sc:#C0262D}
+#app[data-deck="fr"] .card.sB,#app[data-deck="fr"] .card.sE,#app[data-deck="fr"] .gpair .mc.sB,#app[data-deck="fr"] .gpair .mc.sE{--sc:#1B1B2A}
+#app[data-deck="fr"] .card:not(.back) .cv{color:var(--sc)}
+#app[data-deck="fr"] .card:not(.back) .ci{width:52%;left:24%}
+
 /* ===== historique ===== */
 #hist{z-index:46}
 #hist .sc{max-height:86%;display:flex;flex-direction:column}
@@ -351,8 +357,8 @@ table.sum small{display:block;color:var(--mute);font-weight:400;font-size:calc(1
    ===================================================================== */
 const SEQ=[1,2,3,4,5,6,7,10,11,12];
 const SUITS=['B','C','E','D'];
-const SN={B:'Bâtons',C:'Coupes',E:'Épées',D:'Deniers'};
-const NAMES={10:'Souta',11:'Cabal',12:'Rey'};
+const SN={B:'Trèfle',C:'Cœur',E:'Pique',D:'Carreau'};
+const NAMES={10:'Valet',11:'Dame',12:'Roi'};
 const BOTS=[
   {n:'Le Marchand',l:'Facile',a:'ت'},
   {n:'La Crieuse',l:'Moyen',a:'ص'},
@@ -370,7 +376,7 @@ const BARS={
 };
 const ABORT=Symbol('abort');
 const $=s=>document.querySelector(s);
-const G={cfg:{level:2,exch:true,qaa:true,fmt:'std',makla:false,baroud:false},tok:0,match:null,R:null,tuto:null};
+const G={cfg:{level:0,exch:false,qaa:false,fmt:'light',makla:false,baroud:false},tok:0,match:null,R:null,tuto:null};
 const UI={phase:'idle',sel:null,picked:null,oppReady:false,reveal:null,hl:new Set(),newId:null,allow:null,dragOver:null,sel2:null,bar:null,kv:null,pick:null,pickMsg:''};
 let FAST=false,UID=0;
 
@@ -751,7 +757,7 @@ async function resolveTurn(h,b){
   R.curPlays=null;UI.reveal=null;UI.hl=new Set();render();
   if(last&&R.qaa&&lastKind[R.dealer]!=='free'){
     addPts(R.dealer,'qaa',2);
-    await banner('Qaa ! +2',R.dealer?'bot':'pt',900);
+    await banner('Dernière capture ! +2',R.dealer?'bot':'pt',900);
   }
 }
 
@@ -919,7 +925,7 @@ function tableRows(){
   if(R.baroud)rows.push(['Départ','base']);
   rows.push(['Annonces','ann'],['Missa','missa']);
   if(R.exch)rows.push(['Échanges','exch']);
-  if(R.qaa)rows.push(['Qaa','qaa']);
+  if(R.qaa)rows.push(['Dernière capture','qaa']);
   if(R.baroud)rows.push(['Mèches','meche'],['Kelma','kelma']);
   if(R.moul)rows.push(['Moul Souk','moul']);
   if(R.baroud)rows.push(['Poudrière','pot']);
@@ -966,7 +972,7 @@ const LESSONS=[
    rig:{me:['4D','7B','2E','1B'],bot:['12C','3C','2C','1C'],souk:['4B','7E','10B','2D']},
    steps:[
     {msg:'Pose ton 4 sur le Souk.',me:['4D','S'],bot:['12C','M']},
-    {msg:'Le 7 ramasse aussi le 10.',me:['7B','S'],bot:['3C','S']},
+    {msg:'Le 7 ramasse aussi le Valet.',me:['7B','S'],bot:['3C','S']},
     {msg:'Vide le Souk : Missa !',me:['2E','S'],bot:['2C','S']}]},
   {name:'Médina',total:4,dealer:1,exch:false,qaa:false,moul:0,
    rig:{me:['7B','7C','7E','11D'],bot:['12B','5C','11C','4E'],souk:['3B','6C']},
@@ -992,7 +998,7 @@ const LESSONS=[
    steps:[
     {msg:'Même valeur, même zone : échange.',me:['10D','S'],bot:['10B','S']},
     {msg:'Chaîne : 4, 5, 6.',me:['4D','S'],bot:['3C','M']},
-    {msg:'Dernier tour : capture pour le Qaa.',me:['12C','S'],bot:['2E','S']}]},
+    {msg:'Dernier tour : ta capture marque +2.',me:['12C','S'],bot:['2E','S']}]},
   {name:'Makla',total:4,dealer:1,exch:false,qaa:false,moul:5,makla:true,
    rig:{me:['4D','7B','3E','2E'],bot:['4C','4E','12B','5B'],souk:['4B','2D','7E','3C']},
    steps:[
@@ -1005,7 +1011,7 @@ const LESSONS=[
    steps:[
     {msg:'Glisse Kelma sous ton 5 : annonce 3.',me:['5B','M'],bot:['12C','S'],mb:{bar:'Kelma',kv:3}},
     {msg:'Capture un 3 : parole tenue.',me:['3D','S'],bot:['7B','M']},
-    {msg:'Khatf (1 jeton) : prends son 12.',me:['4E','M'],bot:['2B','M'],mb:{bar:'Khatf',kt:'12C'}},
+    {msg:'Khatf (1 jeton) : prends son Roi.',me:['4E','M'],bot:['2B','M'],mb:{bar:'Khatf',kt:'12C'}},
     {msg:'Vide le Souk : Missa !',me:['6B','S'],bot:['11E','M']}]},
   {name:'Baroud 2',total:3,dealer:1,exch:false,qaa:false,moul:0,baroud:true,
    rig:{me:['6B','7B','7C','2E'],bot:['6E','4D','5E','1E'],souk:['6C','2D'],reserve:['1D','3E'],bar:[['Qontra','Aoud'],['Zerba','Chergui']]},
@@ -1244,7 +1250,7 @@ function renderHome(){
     <div class="hbox">
       <div class="row" id="fmt">${Object.keys(FMT).map(k=>`<button class="seg ${c.fmt===k?'on':''}" data-f="${k}">${FMT[k].n}<small>${FMT[k].t} tours</small></button>`).join('')}</div>
       <div class="row" id="lvl">${BOTS.map((b,i)=>`<button class="seg ${c.level===i?'on':''}" data-l="${i}">${b.n.replace(/^(Le|La) /,'')}<small>${b.l}</small></button>`).join('')}</div>
-      <div class="row"><button class="tgl ${c.exch?'on':''}" data-t="exch">Échanges<i></i></button><button class="tgl ${c.qaa?'on':''}" data-t="qaa">Qaa<i></i></button></div>
+      <div class="row"><button class="tgl ${c.exch?'on':''}" data-t="exch">Échanges<i></i></button><button class="tgl ${c.qaa?'on':''}" data-t="qaa">Dernière capture<i></i></button></div>
       <div class="row"><button class="tgl ${c.makla?'on':''}" data-t="makla">Makla<i></i></button><button class="tgl ${c.baroud?'on':''}" data-t="baroud">Baroud<i></i></button></div>
       ${c.baroud?'<button class="btn" id="gal">Les 8 cartes Baroud</button>':''}
       <button class="btn pri" id="play">Jouer</button>
@@ -1400,6 +1406,24 @@ document.addEventListener('keydown',e=>{
 
 
 /* =====================================================================
+   JEU FRANÇAIS UNIQUEMENT : As, 2 à 7, Valet, Dame, Roi · ♣ ♥ ♠ ♦
+   (les 8 et les 9 sont écartés, sauf en Baroud où ils deviennent les cartes d’action)
+   ===================================================================== */
+const FRK={1:'A',10:'J',11:'Q',12:'K'};
+document.querySelector('svg defs').insertAdjacentHTML('beforeend',
+ '<symbol id="fs-C" viewBox="0 0 24 24"><path d="M12 21.5S3 15.8 3 9.6A4.9 4.9 0 0 1 12 7a4.9 4.9 0 0 1 9 2.6c0 6.2-9 11.9-9 11.9z" fill="currentColor"/></symbol>'+
+ '<symbol id="fs-D" viewBox="0 0 24 24"><path d="M12 1.5l8 10.5-8 10.5L4 12z" fill="currentColor"/></symbol>'+
+ '<symbol id="fs-E" viewBox="0 0 24 24"><path d="M12 1.5c4.3 4.8 8.5 7.4 8.5 11.6a4.5 4.5 0 0 1-7.5 3.3c.2 2.1.9 3.7 2.3 5.1H8.7c1.4-1.4 2.1-3 2.3-5.1a4.5 4.5 0 0 1-7.5-3.3C3.5 8.9 7.7 6.3 12 1.5z" fill="currentColor"/></symbol>'+
+ '<symbol id="fs-B" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4.4" fill="currentColor"/><circle cx="6.6" cy="14" r="4.4" fill="currentColor"/><circle cx="17.4" cy="14" r="4.4" fill="currentColor"/><path d="M10.7 13h2.6c.2 3.1.9 5.6 2.4 8.3H8.3c1.5-2.700 2.200-5.200 2.400-8.300z" fill="currentColor"/></symbol>');
+
+SN.B='Trèfle';SN.C='Cœur';SN.E='Pique';SN.D='Carreau';
+NAMES[10]='Valet';NAMES[11]='Dame';NAMES[12]='Roi';
+cardInner=function(c){
+  return `<b class="cv">${FRK[c.v]||c.v}</b>${c.v>=10?'<i class="cn">'+NAMES[c.v]+'</i>':''}<svg class="ci" viewBox="0 0 24 24"><use href="#fs-${c.s}"/></svg>`;
+};
+document.getElementById('app').dataset.deck='fr';
+
+/* =====================================================================
    HISTORIQUE DES COUPS — depuis la pause, la fin de manche et la fin de match
    ===================================================================== */
 const HL={log:[],pending:[],cur:null};
@@ -1409,12 +1433,9 @@ function Hn(p){
   return p===0?'Toi':(G.tuto?'Le Marchand':BOTS[G.cfg.level].n);
 }
 function HEn(e){return (typeof entName==='function')?entName(e):Hn(e);}
-function Hcard(c){
-  if(G.R&&G.R.baroud)return (HFV[c.v]||c.v)+HFR[c.s];
-  return c.v+' '+HSH[c.s];
-}
+function Hcard(c){return (HFV[c.v]||c.v)+HFR[c.s];}
 const HZ={S:'Souk',M:'Médina'};
-const HK={ann:'annonce',missa:'Missa',exch:'échange',qaa:'Qaa',moul:'Moul Souk',meche:'mèche',kelma:'Kelma',pot:'Poudrière'};
+const HK={ann:'annonce',missa:'Missa',exch:'échange',qaa:'Dernière capture',moul:'Moul Souk',meche:'mèche',kelma:'Kelma',pot:'Poudrière'};
 function Hround(){return G.match?G.match.round:0;}
 function Hesc(s){return String(s).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));}
 function HLpts(e,k,g){
@@ -1436,7 +1457,7 @@ applyRes=async function(r){
   }
   return _Hap2(r);
 };
-const HSKIP=/^((Zerba|Sber|Aoud|Fal|Qontra|Khatf|Kelma|Chergui) !$)|^(Wach|Refresh|Le Donneur distribue|Tu donnes|.+ donne$|Ronda|Tringa|Missa|Qaa|Moul Souk|Kelma tenue|Kelma rompue|Poudrière|Poudre)/;
+const HSKIP=/^((Zerba|Sber|Aoud|Fal|Qontra|Khatf|Kelma|Chergui) !$)|^(Wach|Refresh|Le Donneur distribue|Tu donnes|.+ donne$|Ronda|Tringa|Missa|Dernière capture|Moul Souk|Kelma tenue|Kelma rompue|Poudrière|Poudre)/;
 const _Hbn=banner;
 banner=function(txt,kd,ms){
   try{
@@ -1530,28 +1551,34 @@ const MAN_TABS=[
 <h3>Le jeu en 30 secondes</h3>
 <p>À chaque tour, chaque joueur pose une carte en secret sur l’une des deux zones du plateau : le <b>Souk</b> (le volume) ou la <b>Médina</b> (les cris). Les cartes sont retournées ensemble. La plus haute valeur résout en premier. Une carte de même valeur qu’une carte de la zone la capture. En fin de manche, la plus grosse pile gagne le jeton <b>Moul Souk</b>.</p>
 <h3>Matériel</h3>
-<ul><li>40 cartes espagnoles : As à 7, puis 10, 11, 12 (sans 8 ni 9).</li>
-<li>Un plateau : Souk, Médina, coin Ronda.</li>
-<li>Jetons de 1 point (pois chiches) et 7bl, le bâtonnet qui vaut 5 points.</li>
+<ul><li><b>40 cartes du jeu français</b> : As, 2 à 7, Valet, Dame, Roi. On retire les 8, 9 et 10 : ils restent écartés, sauf en Baroud où les 8 et les 9 deviennent les cartes d’action.</li>
+<li>Un plateau : Souk, Médina, coin Ronda, zone neutre.</li>
+<li>Jetons de 1 point (pois chiches) et <b>bâtonnets</b> qui valent 5 points.</li>
 <li>14 jetons de couleur par joueur, un jeton Moul Souk (+3, +4 ou +5), un jeton de Donneur, un sablier de 15 s (facultatif).</li></ul>
 <h3>Mise en place</h3>
 <ol><li><b>Le Donneur.</b> Chacun coupe le paquet : la carte la plus haute désigne le Donneur. Égalité : on recommence.</li>
 <li><b>La donne.</b> Le Donneur mélange et donne 4 cartes à chacun, face cachée.</li>
 <li><b>La table.</b> Il pose des cartes face visible, toutes au Souk (4 à deux joueurs, 6 à trois ou quatre). La Médina est vide.</li>
-<li><b>Le paquet du Donneur.</b> Il met de côté les cartes des distributions ; le reste est écarté, face cachée, sans être regardé.</li>
+<li><b>Le paquet du Donneur.</b> Il met de côté les cartes des distributions. Tout le reste est <b>écarté</b>, face cachée, sans être regardé.</li>
+<li><b>La Réserve</b> (modules Échanges et Baroud). Il prélève 5 cartes sur les écartées (1 seule à quatre joueurs) et les pose à part, face cachée, près de lui. Voir l’onglet « Échanges ».</li>
 <li><b>Les jetons.</b> Banque au centre, jeton Moul Souk au centre, jetons de couleur devant chacun. Tout le monde part de zéro.</li></ol>
 <h3>Un tour</h3>
 <ol><li><b>Sélection.</b> Je choisis ma carte en secret.</li>
-<li><b>Pose.</b> « 3, 2, 1 » : la carte, face cachée, va dans la zone neutre ; puis je la glisse sur ma zone.</li>
+<li><b>Pose en zone neutre.</b> « 3, 2, 1 » : je pose ma carte, face cachée, sur la zone neutre. Elle est alors <b>scellée</b>.</li>
+<li><b>Glissement.</b> Quand tout le monde a posé, je glisse ma carte sur la zone de mon choix.</li>
 <li><b>Révélation.</b> « Wach ! » : on retourne ensemble.</li>
 <li><b>Résolution.</b> Dans l’ordre d’initiative.</li>
 <li><b>Fin de tour.</b> On passe au suivant.</li></ol>
-<div class="note"><b>Dans l’app.</b> Touche une carte, puis « Poser » (ou glisse-la sur le plateau). Elle est scellée dans la zone neutre : on ne la reprend plus. Glisse-la ensuite vers le Souk ou la Médina, puis tout le monde se révèle d’un coup.</div>
-<h3>Qui résout en premier ?</h3>
-<p>La carte de plus haute valeur résout en premier : <b>12 · 11 · 10 · 7 · 6 · 5 · 4 · 3 · 2 · 1</b>. À valeur égale, le Donneur résout en dernier. Au dernier tour, le Donneur résout toujours en dernier. Les deux zones se résolvent chacune de leur côté.</p>
+<div class="note"><b>Règle de la zone neutre.</b> À chaque tour, <b>tous les joueurs, sans exception, doivent d’abord poser leur carte sur la zone neutre</b> : la carte est scellée et <b>ne revient jamais en main</b>. Ce n’est qu’ensuite, une fois toutes les cartes posées, que chacun peut la glisser sur la zone de son choix. Personne ne glisse avant que tout le monde ait posé.</div>
+<div class="note"><b>Dans l’app.</b> Touche une carte, puis « Poser » (ou glisse-la sur le plateau). Les autres joueurs posent aussi, le compte à rebours « 3, 2, 1 » passe, puis tu glisses ta carte scellée vers le Souk ou la Médina. Tout le monde se révèle d’un coup.</div>
+<h3>Qui résout en premier ? L’ordre d’initiative</h3>
+<ol><li><b>Chaque zone se résout de son côté.</b> Dans une zone, la carte de plus haute valeur passe en premier : <b>Roi · Dame · Valet · 7 · 6 · 5 · 4 · 3 · 2 · As</b>.</li>
+<li><b>À valeur égale</b>, le Donneur résout en dernier (à plusieurs, l’ordre complet est dans l’onglet « À plusieurs »).</li>
+<li><b>Au dernier tour</b>, le Donneur résout toujours en dernier, <b>quelle que soit sa carte, même sans aucune égalité</b>.</li></ol>
+<p>Une carte résolue modifie la zone : celle qui suit joue sur la zone mise à jour.</p>
 <h3>Capturer</h3>
 <p><b>Capture directe, obligatoire.</b> Si votre carte a la même valeur qu’une ou plusieurs cartes de sa zone, vous ramassez toutes les cartes de cette valeur.</p>
-<p><b>Chaîne, automatique.</b> Vous ramassez aussi les cartes des valeurs immédiatement supérieures dans la suite <b>1 → 2 → 3 → 4 → 5 → 6 → 7 → 10 → 11 → 12</b>, sur 2 marches au plus. Jamais vers le bas. Un trou dans la suite arrête la chaîne.</p>
+<p><b>Chaîne, automatique.</b> Vous ramassez aussi les cartes des valeurs immédiatement supérieures dans la suite <b>As → 2 → 3 → 4 → 5 → 6 → 7 → Valet → Dame → Roi</b>, sur 2 marches au plus. Jamais vers le bas. Un trou dans la suite arrête la chaîne.</p>
 <p>Au Souk, les cartes ramassées vont dans votre pile. En Médina, elles sortent du jeu (sauf le trio d’une Tringa). Sans capture, votre carte reste face visible dans sa zone et devient capturable par tous.</p>
 <h3>Souk et Médina</h3>
 <table><tr><th></th><th>Souk</th><th>Médina</th></tr>
@@ -1572,8 +1599,8 @@ const MAN_TABS=[
 <h3>Distributions du Donneur</h3>
 <p>Aux tours indiqués par le format, le Donneur donne 2 cartes à chaque joueur, prises dans son paquet. Personne ne se sert seul.</p>
 <h3>Fin de manche : le décompte</h3>
-<p><b>Déjà acquis.</b> Rondas, Tringas et Missas sont déjà dans vos jetons. <b>Qaa</b> (module). <b>Moul Souk</b> : la plus grosse pile prend le jeton et marque sa valeur ; égalité au sommet : personne.</p>
-<p><b>Lecture d’un score :</b> 5 × 7bl + jetons. Dès que vous avez 5 jetons devant vous, échangez-les contre une 7bl. On ne retire jamais de points.</p>
+<p><b>Déjà acquis.</b> Rondas, Tringas et Missas sont déjà dans vos jetons. <b>Dernière capture</b> (module). <b>Moul Souk</b> : la plus grosse pile prend le jeton et marque sa valeur ; égalité au sommet : personne.</p>
+<p><b>Lecture d’un score :</b> bâtonnets × 5 + jetons. Dès que vous avez 5 jetons devant vous, échangez-les contre un bâtonnet. On ne retire jamais de points.</p>
 <h3>Gagner</h3>
 <p>Une manche par joueur : 2 manches à deux, 3 à trois, 4 à quatre. Le Donneur tourne : chacun donne une fois. Le score cumulé le plus élevé gagne. Égalité parfaite : une manche de départage.</p>`},
  {id:'formats',t:'Formats',h:`
@@ -1588,15 +1615,15 @@ const MAN_TABS=[
 <h3>Kbira (14 tours)</h3>
 <p>On joue toutes ses cartes : les mains finissent vides. Votre dernière carte est un secret à planifier. Avec Échanges, on ne peut surenchérir que si l’on garde assez de cartes pour les tours restants.</p>
 <h3>Plusieurs joueurs</h3>
-<p>À trois ou à quatre : 6 tours, distributions aux tours 3 et 5, jeton Moul Souk +3 (à quatre joueurs en 2 contre 2 : +4). Voir l’onglet « À plusieurs ».</p>`},
- {id:'qaa',t:'Qaa',h:`
-<h3>Qaa : le dernier mot du Donneur</h3>
+<p>À trois ou à quatre : 6 tours, distributions aux tours 3 et 5, jeton Moul Souk +3 (en 2 contre 2 : +4). Voir l’onglet « À plusieurs ».</p>`},
+ {id:'qaa',t:'Dernière capture',h:`
+<h3>Dernière capture : le dernier mot du Donneur</h3>
 <p>Au dernier tour, si la carte du Donneur <b>capture</b>, il marque <b>+2</b>.</p>
-<ul><li>Le Donneur résout toujours en dernier au dernier tour : il choisit sa zone en sachant ce qu’il reste.</li>
+<ul><li>Le Donneur résout toujours en dernier au dernier tour, quelle que soit sa carte : il choisit sa zone en sachant ce qu’il reste.</li>
 <li>Compte comme capture : une capture directe ou en chaîne, une Ronda, une Tringa, ou une enchère d’échange gagnée par sa carte.</li>
 <li>Une carte qui reste libre ne rapporte rien.</li>
-<li>Avec le Baroud, le Qaa se juge sur la dernière carte résolue du Donneur.</li></ul>
-<div class="note">Le Qaa est ajouté au décompte de fin de manche, avant le Moul Souk. Il n’est pas soumis au plafond de 6 points.</div>`},
+<li>Avec le Baroud, la Dernière capture se juge sur la dernière carte résolue du Donneur.</li></ul>
+<div class="note">Les +2 sont ajoutés au décompte de fin de manche, avant le Moul Souk. Ils ne sont pas soumis au plafond de 6 points.</div>`},
  {id:'echanges',t:'Échanges',h:`
 <h3>Un duel d’enchères</h3>
 <p>Quand deux joueurs révèlent la <b>même valeur dans la même zone</b> et que la <b>première carte reste libre</b> (elle n’a rien capturé, pas même par Ronda), un échange s’ouvre au lieu de la capture ordinaire.</p>
@@ -1607,13 +1634,25 @@ const MAN_TABS=[
 <ul><li>Le deuxième résolveur crie <b>Bouahd</b>. Le premier peut alors <b>abattre</b> de sa main une 3ᵉ carte identique (<b>Btlata</b>) ; le deuxième peut répondre avec la 4ᵉ (<b>Bkhmsa</b>).</li>
 <li>Le dernier mot l’emporte : seuls ses points comptent, et il ramasse toutes les cartes de l’échange.</li>
 <li>Au Souk, ces cartes vont dans sa pile. En Médina, elles sortent du jeu.</li>
-<li>Les points d’échange sont hors plafond. Les cartes d’un échange ne font jamais de Ronda ni de Tringa.</li>
-<li>Chaque carte abattue est compensée par une carte de la Réserve (5 cartes à trois joueurs et en duel, 1 carte à quatre).</li></ul>
+<li>Les points d’échange sont hors plafond. Les cartes d’un échange ne font jamais de Ronda ni de Tringa.</li></ul>
 <div class="note"><b>Dans l’app.</b> Une invite de 8 secondes te propose de surenchérir quand tu peux abattre une carte.</div>
+<h3>La Réserve</h3>
+<p>Le module ajoute une pile à la mise en place : la <b>Réserve</b>. Elle ne sert qu’à <b>compenser les cartes abattues depuis la main</b>.</p>
+<ul><li><b>Combien.</b> 5 cartes, prélevées sur les écartées avant le début de la manche. <b>1 seule carte à quatre joueurs et en 2 contre 2</b>, où la pioche ne laisse rien de plus.</li>
+<li><b>Où.</b> À part, face cachée, près du Donneur. Personne ne la regarde.</li>
+<li><b>Comment.</b> Chaque carte abattue (Btlata ou Bkhmsa) donne droit à <b>1 carte de la Réserve</b>, que <b>le Donneur remet immédiatement</b> : on ne se sert jamais soi-même.</li>
+<li><b>Réserve vide.</b> La carte de compensation est perdue, mais les points et les cartes de l’échange sont conservés.</li>
+<li><b>Jamais le paquet.</b> On ne compense jamais depuis le paquet du Donneur : les deux piles ne se mélangent pas.</li>
+<li><b>Partagée avec le Baroud.</b> La Réserve est unique : le Baroud met toujours en place la sienne (5 cartes) pour compenser l’Aoud. Elle est distincte de la poudre, qui est une réserve de jetons.</li></ul>
 <h3>Cas particuliers</h3>
 <ul><li><b>Ronda en place.</b> Si tu as une paire garée et qu’un adversaire joue la même valeur au même tour, l’échange a lieu : ta carte compte comme libre, les deux cartes sortent du jeu, et la Tringa n’est pas complétée.</li>
 <li><b>À trois joueurs.</b> Une 3ᵉ carte identique révélée au même tour est un Btlata automatique pour son joueur.</li>
-<li><b>2 contre 2.</b> Les échanges n’ont lieu qu’entre adversaires.</li></ul>`},
+<li><b>2 contre 2.</b> Voir ci-dessous.</li></ul>
+<h3>Échanges en 2 contre 2</h3>
+<ul><li>L’échange ne se joue <b>qu’entre adversaires</b>, jamais entre coéquipiers : si deux partenaires posent la même valeur, c’est une capture ordinaire, sans échange.</li>
+<li><b>Un coéquipier peut soutenir son partenaire, mais seulement avec une carte révélée au même tour</b>, de même valeur et dans la même zone : elle rejoint l’échange comme 3ᵉ ou 4ᵉ exemplaire (cri automatique pour son équipe).</li>
+<li>Un coéquipier qui n’a <b>pas</b> révélé de carte dans cet échange ne peut pas abattre une carte de sa main pour aider : seuls les joueurs engagés dans l’échange surenchérissent.</li>
+<li>Le butin rejoint la <b>pile commune</b> de l’équipe (au Souk) ou sort du jeu (en Médina).</li></ul>`},
  {id:'makla',t:'Makla',h:`
 <h3>Votre pile reste en jeu</h3>
 <p>Votre pile n’est plus cachée : elle reste au Souk, <b>coiffée, face visible, par la dernière carte ajoutée</b>. Quiconque capture cette carte au Souk emporte <b>la pile entière</b>.</p>
@@ -1625,8 +1664,8 @@ const MAN_TABS=[
 <h3>Jeton Moul Souk</h3>
 <p>+5 en duel Standard et en 2 contre 2, +4 à quatre joueurs sans Baroud, +3 à trois joueurs.</p>`},
  {id:'baroud',t:'Baroud',h:`
-<h3>Huit cartes d’action</h3>
-<p>Ce sont les 8 et les 9 du jeu. Chaque joueur en reçoit des cartes, qu’il joue <b>glissées sous sa carte du tour</b> (une seule par tour), face cachée jusqu’à la révélation. Pour le marquer, le jeu passe au <b>jeu français</b> (♠ ♥ ♦ ♣, A, J, Q, K).</p>
+<h3>Huit cartes d’action : les 8 et les 9</h3>
+<p>Ce sont les 8 et les 9 du jeu français, écartés hors Baroud. Chaque joueur en reçoit, et les joue <b>glissées sous sa carte du tour</b> (une seule par tour), face cachée jusqu’à la révélation.</p>
 <table><tr><th>Carte</th><th>Effet</th></tr>
 <tr><td><b>Zerba</b> · 8♣</td><td>Tu résous en premier.</td></tr>
 <tr><td><b>Sber</b> · 8♥</td><td>Tu résous en dernier.</td></tr>
@@ -1639,7 +1678,8 @@ const MAN_TABS=[
 <h3>Poudre et mèches</h3>
 <ul><li>En duel : 2 cartes Baroud chacun et 3 jetons de poudre. Une mèche se paie avec ses jetons, dans la <b>Poudrière</b> : Aoud 1, Khatf 1, Chergui 1, les autres sont gratuites. Une Baroud impayable ne peut pas être jouée.</li>
 <li>Fin de manche : le plus riche prend la Poudrière. Égalité : le pot est reporté.</li>
-<li>Kelma est évaluée au décompte, avant le Moul Souk.</li></ul>
+<li>Kelma est évaluée au décompte, avant le Moul Souk.</li>
+<li>La Réserve de 5 cartes est toujours mise en place avec le Baroud (pour l’Aoud) : voir « Échanges ».</li></ul>
 <h3>À trois et à quatre</h3>
 <ul><li><b>À trois.</b> 1 carte chacune parmi les 8, 3 jetons de poudre, Poudrière. Mèches : Khatf 2, Aoud 1, Fal 1, Chergui 1. Qontra vise la Baroud d’un adversaire au choix.</li>
 <li><b>À quatre.</b> 6 cartes (sans Aoud ni Fal), 1 chacune, mèches gratuites, pas de Poudrière. Kelma : +1 si tenue, +2 à chaque adversaire sinon.</li>
@@ -1648,9 +1688,14 @@ const MAN_TABS=[
 <h3>À trois ou à quatre joueurs</h3>
 <ul><li><b>Plateau.</b> 6 cartes au Souk, 4 cartes par joueur, distributions de 2 cartes aux tours 3 et 5, 6 tours.</li>
 <li><b>Chacun pour soi</b> (3 ou 4 joueurs) ou <b>2 contre 2</b> : une pile commune par équipe, un plafond de 6 points d’annonces par joueur.</li>
-<li><b>Initiative.</b> À valeur égale, le premier à résoudre est celui qui suit le Donneur dans le sens inverse des aiguilles d’une montre. Le Donneur reste dernier. Le numéro sur chaque joueur indique sa priorité.</li>
 <li><b>Moul Souk.</b> +3 à trois et à quatre joueurs, +4 en 2 contre 2.</li>
 <li>Une manche par joueur : 3 manches à trois, 4 manches à quatre.</li></ul>
+<h3>L’ordre d’initiative à plusieurs</h3>
+<ol><li><b>La plus haute valeur d’abord</b>, zone par zone : Roi · Dame · Valet · 7 · 6 · 5 · 4 · 3 · 2 · As.</li>
+<li><b>À valeur égale</b>, l’ordre suit la <b>rotation du Donneur</b> : le premier à résoudre est celui qui <b>suit le Donneur dans le sens inverse des aiguilles d’une montre</b>, puis le suivant, et ainsi de suite. <b>Le Donneur est toujours le dernier.</b></li>
+<li><b>Au dernier tour</b>, le Donneur résout en dernier, quelle que soit sa carte, même sans égalité.</li></ol>
+<p>Le Donneur change à chaque manche (chacun donne une fois) : <b>l’ordre de priorité tourne avec lui</b>. Exemple à quatre joueurs A, B, C, D, dans le sens inverse des aiguilles d’une montre. Si A donne, la priorité à égalité est B, C, D, A. Si B donne à la manche suivante, elle devient C, D, A, B.</p>
+<div class="note"><b>Dans l’app.</b> Le petit numéro sur chaque joueur est sa priorité à égalité de valeur (1 = premier). Il change quand le Donneur change.</div>
 <h3>Le plateau à quatre côtés</h3>
 <p>Chaque type de zone est divisé en deux parties : la <b>Médina</b> (haut gauche et bas droite) et le <b>Souk</b> (haut droite et bas gauche). Devant chaque joueur : une partie de Médina et une partie de Souk.</p>
 <ul><li>Tu glisses ta carte de la zone neutre vers le <b>type</b> de zone voulu.</li>
@@ -1660,7 +1705,7 @@ const MAN_TABS=[
 <h3>2 contre 2</h3>
 <ul><li>Les partenaires sont face à face. La Ronda se fait avec ses propres cartes, jouées en Médina à deux tours différents.</li>
 <li>Capturer la carte de son partenaire est une capture ordinaire.</li>
-<li>Les échanges n’ont lieu qu’entre adversaires.</li>
+<li>Échanges : seulement entre adversaires. Un coéquipier ne soutient son partenaire qu’avec une carte révélée au même tour (voir « Échanges »).</li>
 <li>Jeton Moul Souk +4 (+5 en Makla sans Baroud).</li></ul>`},
  {id:'aide',t:'Aide-mémoire',h:`
 <h3>Ce qui rapporte</h3>
@@ -1669,13 +1714,14 @@ const MAN_TABS=[
 <tr><td>Tringa</td><td>+3</td><td>Médina</td></tr>
 <tr><td>Plafond d’annonces</td><td>6 par joueur et par manche</td><td>Médina</td></tr>
 <tr><td>Missa : vider le Souk</td><td>+1</td><td>Souk</td></tr>
-<tr><td>Qaa : la carte du Donneur capture au dernier tour</td><td>+2</td><td>dernier tour</td></tr>
+<tr><td>Dernière capture : la carte du Donneur capture au dernier tour</td><td>+2</td><td>dernier tour</td></tr>
 <tr><td>Moul Souk : la plus grosse pile</td><td>valeur du jeton</td><td>fin de manche</td></tr>
 <tr><td>Échanges (module)</td><td>+1 · +3 · +5</td><td>Médina ou Souk</td></tr></table>
 <h3>Ordres à retenir</h3>
-<p><b>Valeurs :</b> 12 · 11 · 10 · 7 · 6 · 5 · 4 · 3 · 2 · 1.</p>
-<p><b>Chaîne :</b> 1 → 2 → 3 → 4 → 5 → 6 → 7 → 10 → 11 → 12, deux marches, jamais vers le bas.</p>
-<p><b>Score :</b> 5 jetons = une 7bl.</p>`}
+<p><b>Valeurs :</b> Roi · Dame · Valet · 7 · 6 · 5 · 4 · 3 · 2 · As.</p>
+<p><b>Chaîne :</b> As → 2 → 3 → 4 → 5 → 6 → 7 → Valet → Dame → Roi, deux marches, jamais vers le bas.</p>
+<p><b>Score :</b> 5 jetons = un bâtonnet.</p>
+<p><b>Tour :</b> sélection · pose en zone neutre (tous, scellée) · glissement · Wach ! · résolution.</p>`}
 ];
 const MAN={tab:'base'};
 function Mopen(tab){
