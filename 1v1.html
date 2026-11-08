@@ -3228,7 +3228,9 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){const m=document.ge
 })();
 
 if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){
-  window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});
+  var had=!!navigator.serviceWorker.controller,rl=false;
+  navigator.serviceWorker.addEventListener('controllerchange',function(){if(had&&!rl){rl=true;location.reload();}});
+  window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}}).catch(function(){});});
 }
 
 renderHome();

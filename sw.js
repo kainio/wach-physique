@@ -1,9 +1,11 @@
 /* Wach?! plateau — service worker : hors ligne après la première visite */
-const V='wach-plateau-v3';
+const V='wach-plateau-v6';
 const PRE=['./','index.html','1v1.html','multi.html','simple-1v1.html','simple-multi.html','video.html','manifest.webmanifest',
   'icons/icon-192.png','icons/icon-512.png','icons/maskable-512.png','icons/apple-touch-icon.png','icons/favicon.png'];
 self.addEventListener('install',e=>{
-  e.waitUntil(caches.open(V).then(c=>c.addAll(PRE).then(()=>Promise.all(['explainer.mp4','explainer-poster.jpg','explainer-vertical.mp4','explainer-vertical-poster.jpg'].map(u=>c.add(u).catch(()=>{}))))).then(()=>self.skipWaiting()));
+  /* 'reload' : on ignore le cache HTTP du navigateur ou de l’hébergeur, sinon l’ancienne version serait recopiée dans le cache */
+  const get=(c,u)=>fetch(new Request(u,{cache:'reload'})).then(r=>{if(!r.ok)throw new Error(u);return c.put(u,r);});
+  e.waitUntil(caches.open(V).then(c=>Promise.all(PRE.map(u=>get(c,u))).then(()=>Promise.all(['explainer.mp4','explainer-poster.jpg','explainer-vertical.mp4','explainer-vertical-poster.jpg'].map(u=>get(c,u).catch(()=>{}))))).then(()=>self.skipWaiting()));
 });
 self.addEventListener('activate',e=>{
   e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==V&&k!==V+'-fonts').map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
@@ -35,8 +37,8 @@ self.addEventListener('fetch',e=>{
   if(u.origin===location.origin){
     if(/\.mp4$/.test(u.pathname)){e.respondWith(vidRes(r));return;}
     if(r.mode==='navigate'){
-      e.respondWith(fetch(r).then(res=>{const cp=res.clone();caches.open(V).then(c=>c.put(r,cp));return res;})
-        .catch(()=>caches.match(r,{ignoreSearch:true}).then(m=>m||caches.match('index.html'))));
+      e.respondWith(fetch(r.url,{cache:'no-store'}).then(res=>{const cp=res.clone();caches.open(V).then(c=>c.put(r.url,cp));return res;})
+        .catch(()=>caches.match(r.url,{ignoreSearch:true}).then(m=>m||caches.match('index.html'))));
       return;
     }
     e.respondWith(caches.match(r).then(m=>m||fetch(r).then(res=>{const cp=res.clone();caches.open(V).then(c=>c.put(r,cp));return res;})));

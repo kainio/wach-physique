@@ -43,7 +43,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer;min-height:50px;border
   <p class="sub">Compagnon du jeu physique</p>
   <a class="go" href="1v1.html">1 contre 1<small>Table physique · Light, Standard, Grande, Café</small></a>
   <a class="go" href="multi.html">3 et 4 joueurs<small>1v1v1 · 1v1v1v1 · 2v2</small></a>
-  <a class="go" href="video.html">Vidéo explicative<small>Le plateau et une manche en 60 secondes</small></a>
+  <a class="go" href="video.html">Vidéo explicative<small>Le plateau en 60 secondes · versions verticale et horizontale</small></a>
   <div class="alt"><a href="simple-1v1.html">Version simple 1v1</a><a href="simple-multi.html">Version simple 3 et 4 joueurs</a></div>
   <button id="inst" hidden>Installer l’app</button>
   <p id="off"></p>
@@ -61,10 +61,13 @@ button{font:inherit;color:inherit;border:0;cursor:pointer;min-height:50px;border
     else{alert('Touche Partager, puis « Sur l’écran d’accueil ».');}
   });
   if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){
-    navigator.serviceWorker.register('sw.js').then(function(){return navigator.serviceWorker.ready;})
+    var had=!!navigator.serviceWorker.controller,rl=false;
+    navigator.serviceWorker.addEventListener('controllerchange',function(){if(had&&!rl){rl=true;location.reload();}});
+    navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(function(r){try{r.update();}catch(e){}return navigator.serviceWorker.ready;})
       .then(function(){off.textContent='Disponible hors ligne';}).catch(function(){});
   }
 })();
 </script>
+<p id="ver" style="text-align:center;font-size:12px;opacity:.55;margin:18px 0 24px">Version 8 nov. 2026 · v6</p>
 </body>
 </html>
