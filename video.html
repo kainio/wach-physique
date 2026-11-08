@@ -16,14 +16,23 @@ h1{margin:0;font-size:26px}
 video{width:100%;background:#000;border-radius:14px;display:block}
 p{margin:0;opacity:.8;line-height:1.5;font-size:15px}
 a{color:#F1E7D5;font-weight:700}
+.k{border:0;border-radius:12px;padding:10px 16px;background:#F1E7D522;color:#F1E7D5;font:700 15px system-ui;cursor:pointer}.k.on{background:#C85B1D}
+video#v{max-height:78vh;object-fit:contain}
 </style>
 </head>
 <body>
 <main>
   <a href="index.html">&larr; Menu principal</a>
   <h1>Le plateau en 60 secondes</h1>
-  <video controls playsinline preload="metadata" poster="explainer-poster.jpg"><source src="explainer.mp4" type="video/mp4"></video>
+  <p style="display:flex;gap:10px"><button id="kv" class="k">Vertical 9:16</button><button id="kh" class="k">Horizontal 16:9</button></p>
+  <video id="v" controls playsinline preload="metadata"></video>
   <p>Le plateau, un tour (pose scellée en zone neutre), le Souk, la Médina, l’ordre de résolution et la fin de manche.</p>
 </main>
+<script>
+const V={v:['explainer-vertical.mp4','explainer-vertical-poster.jpg'],h:['explainer.mp4','explainer-poster.jpg']},v=document.getElementById('v');
+function set(k){v.src=V[k][0];v.poster=V[k][1];v.load();document.getElementById('kv').classList.toggle('on',k==='v');document.getElementById('kh').classList.toggle('on',k==='h');}
+document.getElementById('kv').onclick=()=>set('v');document.getElementById('kh').onclick=()=>set('h');
+set(innerHeight>innerWidth*1.05?'v':'h');
+</script>
 </body>
 </html>

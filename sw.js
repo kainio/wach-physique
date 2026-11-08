@@ -1,9 +1,9 @@
 /* Wach?! plateau — service worker : hors ligne après la première visite */
-const V='wach-plateau-v2';
+const V='wach-plateau-v3';
 const PRE=['./','index.html','1v1.html','multi.html','simple-1v1.html','simple-multi.html','video.html','manifest.webmanifest',
   'icons/icon-192.png','icons/icon-512.png','icons/maskable-512.png','icons/apple-touch-icon.png','icons/favicon.png'];
 self.addEventListener('install',e=>{
-  e.waitUntil(caches.open(V).then(c=>c.addAll(PRE).then(()=>Promise.all(['explainer.mp4','explainer-poster.jpg'].map(u=>c.add(u).catch(()=>{}))))).then(()=>self.skipWaiting()));
+  e.waitUntil(caches.open(V).then(c=>c.addAll(PRE).then(()=>Promise.all(['explainer.mp4','explainer-poster.jpg','explainer-vertical.mp4','explainer-vertical-poster.jpg'].map(u=>c.add(u).catch(()=>{}))))).then(()=>self.skipWaiting()));
 });
 self.addEventListener('activate',e=>{
   e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==V&&k!==V+'-fonts').map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
