@@ -423,22 +423,22 @@ const SUITS=['B','C','E','D'];
 const SN={B:'Trèfle',C:'Cœur',E:'Pique',D:'Carreau'};
 const NAMES={10:'Valet',11:'Dame',12:'Roi'};
 const BARS={
-  Zerba:{ar:'زربة',d:'Tu résous en premier.'},
-  Sber:{ar:'صبر',d:'Tu résous en dernier.'},
-  Aoud:{ar:'عاود',d:'Deux cartes ce tour. +1 carte. (à trois)'},
-  Fal:{ar:'فال',d:'Vois 3 cartes écartées. (à trois)'},
-  Qontra:{ar:'كونطرا',d:'Annule la Baroud d’un adversaire.'},
-  Khatf:{ar:'خطف',d:'Prends une carte libre.'},
-  Kelma:{ar:'كلمة',d:'Annonce une valeur, capture-la plus tard.'},
-  Chergui:{ar:'شرقي',d:'Une zone glisse vers l’autre.'}
+  Hâte:{ar:'8♣',d:'Tu résous en premier.'},
+  Patience:{ar:'8♥',d:'Tu résous en dernier.'},
+  Encore:{ar:'9♣',d:'Deux cartes ce tour. +1 carte. (à trois)'},
+  Présage:{ar:'9♥',d:'Vois 3 cartes écartées. (à trois)'},
+  Contre:{ar:'8♠',d:'Annule la carte d’un adversaire.'},
+  Rafle:{ar:'9♠',d:'Prends une carte libre.'},
+  Parole:{ar:'8♦',d:'Annonce une valeur, capture-la plus tard.'},
+  Vent:{ar:'9♦',d:'Une zone glisse vers l’autre.'}
 };
-const M3={Zerba:0,Sber:0,Aoud:1,Fal:1,Qontra:0,Khatf:2,Kelma:0,Chergui:1};
+const M3={Hâte:0,Patience:0,Encore:1,Présage:1,Contre:0,Rafle:2,Parole:0,Vent:1};
 const MODES={
   ffa3:{n:3,teams:false,rounds:3,tag:'1v1v1 · Bo3'},
   ffa4:{n:4,teams:false,rounds:4,tag:'1v1v1v1 · 4 manches'},
   duo:{n:4,teams:true,rounds:4,tag:'2v2 · 4 manches'}
 };
-const AIS=[{n:'Yassine',a:'ي'},{n:'Salma',a:'س'},{n:'Karim',a:'ك'}];
+const AIS=[{n:'Hugo',a:'H'},{n:'Léa',a:'L'},{n:'Camille',a:'C'}];
 const LEVELS=['Facile','Moyen','Difficile'];
 const ABORT=Symbol('abort');
 const $=s=>document.querySelector(s);
@@ -465,7 +465,7 @@ function seatName(p){
   if(R&&R.teams&&p===2)return AIS[1].n;
   return AIS[p-1].n;
 }
-function seatAv(p){return p===0?'ا':AIS[p-1].a;}
+function seatAv(p){return p===0?'T':AIS[p-1].a;}
 function entName(e){const R=G.R;if(R.teams)return e===0?'Nous':'Eux';return seatName(e);}
 function tot(e){const s=G.R.sc[e];let t=0;for(const k in s)t+=s[k];return t;}
 function mech(n){return G.R.poudre?M3[n]:0;}
@@ -499,7 +499,7 @@ function newRound(o){
     R.discard=d;
   }
   if(R.baroud&&!o.rig){
-    const pool=N===3?Object.keys(BARS):['Zerba','Sber','Qontra','Khatf','Kelma','Chergui'];
+    const pool=N===3?Object.keys(BARS):['Hâte','Patience','Contre','Rafle','Parole','Vent'];
     const n=shuffle(pool.slice());
     for(let p=0;p<N;p++)R.bar[p]=[n[p]];
   }
@@ -644,7 +644,7 @@ async function finalizeExchange(ex){
       if(c&&canEsc(q)){cand=q;extra=c;break;}
     }
     if(cand===null)break;
-    const pts=ex.pool.length===2?3:5,name=ex.pool.length===2?'Btlata':'Bkhmsa';
+    const pts=ex.pool.length===2?3:5,name=ex.pool.length===2?'Trois':'Cinq';
     const yes=cand===0?await promptEscalate(extra,{name,pts}):botEscalate(cand);
     if(!yes)break;
     R.hands[cand]=R.hands[cand].filter(c=>c.id!==extra.id);
@@ -678,7 +678,7 @@ function freeTargets(){
 function pickTarget(T,only){
   return new Promise((res,rej)=>{
     UI.pick={ids:new Set(T.filter(t=>!only||t.card.code===only).map(t=>t.card.id)),res,list:T};
-    UI.pickMsg='Khatf : touche une carte libre.';
+    UI.pickMsg='Rafle : touche une carte libre.';
     UI.rejectP=rej;render();
   });
 }
@@ -696,12 +696,12 @@ function botKhatfTarget(p,T){
 }
 async function doKhatf(p,kt){
   const R=G.R,T=freeTargets(),e=ent(p);
-  if(!T.length){await banner('Khatf : rien à prendre','info',700);return;}
+  if(!T.length){await banner('Rafle : rien à prendre','info',700);return;}
   let tgt=null;
   if(R.script&&kt)tgt=T.find(t=>t.card.code===kt)||null;
   if(!tgt&&p===0){tgt=await pickTarget(T,null);UI.pick=null;UI.pickMsg='';}
   if(!tgt)tgt=botKhatfTarget(p,T)||T[0];
-  await banner('Khatf !',kind(p),600);
+  await banner('Rafle !',kind(p),600);
   UI.hl=new Set([tgt.card.id]);render();await beat(380);
   const ids=new Set([tgt.card.id]);
   if(tgt.zone==='S'){
@@ -715,7 +715,7 @@ async function doKhatf(p,kt){
 }
 function chooseZone(){
   return new Promise((res,rej)=>{
-    openSheet('<h2>Chergui</h2><div class="sub">Quelle zone souffle ?</div><div class="xbtns"><button class="btn" id="cz1">Souk</button><button class="btn" id="cz2">Médina</button></div>');
+    openSheet('<h2>Vent</h2><div class="sub">Quelle zone souffle ?</div><div class="xbtns"><button class="btn" id="cz1">Souk</button><button class="btn" id="cz2">Médina</button></div>');
     $('#cz1').onclick=()=>{UI.rejectX=null;closeSheet();res('S');};
     $('#cz2').onclick=()=>{UI.rejectX=null;closeSheet();res('M');};
     UI.rejectX=()=>rej(ABORT);
@@ -730,7 +730,7 @@ async function doChergui(p,cz){
   if(R.script&&cz)z=cz;
   else if(p===0)z=await chooseZone();
   else z=botChergui(p);
-  await banner('Chergui ! '+(z==='S'?'Souk → Médina':'Médina → Souk'),kind(p),950);
+  await banner('Vent ! '+(z==='S'?'Souk → Médina':'Médina → Souk'),kind(p),950);
   if(z==='S'){
     R.souk.splice(0).forEach(c=>R.medina.push({card:c,owner:c.own===undefined?null:c.own}));
   }else{
@@ -741,14 +741,14 @@ async function doChergui(p,cz){
 function showFal(){
   const R=G.R,pool=shuffle(R.discard.slice()).slice(0,3);
   return new Promise((res,rej)=>{
-    openSheet('<h2>Fal</h2><div class="sub">Ton Zhar</div><div class="pgrid" style="justify-content:center">'+(pool.map(c=>cardHTML(c,'')).join('')||'<div class="sub">—</div>')+'</div><button class="btn pri" id="falOk" style="width:100%;background:var(--saf);color:#140908">Compris</button>');
+    openSheet('<h2>Présage</h2><div class="sub">Ta chance</div><div class="pgrid" style="justify-content:center">'+(pool.map(c=>cardHTML(c,'')).join('')||'<div class="sub">—</div>')+'</div><button class="btn pri" id="falOk" style="width:100%;background:var(--saf);color:#140908">Compris</button>');
     $('#falOk').onclick=()=>{UI.rejectX=null;closeSheet();res();};
     UI.rejectX=()=>rej(ABORT);
   });
 }
 function chooseQontra(cands,only){
   return new Promise((res,rej)=>{
-    openSheet('<h2>Qontra</h2><div class="sub">Quelle Baroud éteindre ?</div><div class="tgt">'+cands.map(c=>`<button class="btn" data-q="${c.p}"><span>${BARS[c.nm].ar}</span><b>${seatName(c.p)} · ${c.nm}</b></button>`).join('')+'</div>');
+    openSheet('<h2>Contre</h2><div class="sub">Quelle carte éteindre ?</div><div class="tgt">'+cands.map(c=>`<button class="btn" data-q="${c.p}"><span>${BARS[c.nm].ar}</span><b>${seatName(c.p)} · ${c.nm}</b></button>`).join('')+'</div>');
     document.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{
       const q=+b.dataset.q;
       if(only!==undefined&&only!==null&&q!==only){nudge();return;}
@@ -792,7 +792,7 @@ async function resolveTurn(pays){
     if(UI.reveal)UI.reveal.flip=true;
   }));
   vib(15);
-  await banner('Wach !','wach',650);
+  await banner('Retournez !','wach',650);
   const tie=p=>(p-R.dealer-1+N)%N;
   const lastT=R.turn===R.total;
   const prio=p=>Math.max(...plays.filter(x=>x.p===p).map(x=>x.card.v));
@@ -805,9 +805,9 @@ async function resolveTurn(pays){
     const c=mech(live[p]);if(c)pop(ent(p),'−'+c);
     await banner(live[p]+' !',kind(p),560);
   }
-  // Qontra : choix simultanés
+  // Contre : choix simultanés
   const baseOrder=[...Array(N).keys()].sort(cmp(prio));
-  const qs=baseOrder.filter(p=>live[p]==='Qontra');
+  const qs=baseOrder.filter(p=>live[p]==='Contre');
   if(qs.length){
     const tg={};
     for(const q of qs){
@@ -823,14 +823,14 @@ async function resolveTurn(pays){
     const cancelled=new Set();
     for(const q of qs){
       const t=tg[q];
-      if(t===null||t===undefined){await banner('Qontra… dans le vide','info',650);continue;}
-      if(live[t]==='Qontra'&&tg[t]===q){
+      if(t===null||t===undefined){await banner('Contre… dans le vide','info',650);continue;}
+      if(live[t]==='Contre'&&tg[t]===q){
         cancelled.add(q);cancelled.add(t);
-        await banner('Qontra × Qontra','info',800);continue;
+        await banner('Contre × Contre','info',800);continue;
       }
       if(cancelled.has(q))continue;
       cancelled.add(t);
-      await banner('Qontra ! annule '+live[t],kind(q),900);
+      await banner('Contre ! annule '+live[t],kind(q),900);
     }
     for(const x of cancelled){if(UI.reveal.bars[x])UI.reveal.bars[x].x=true;live[x]=null;}
     for(const q of qs)live[q]=null;
@@ -838,14 +838,14 @@ async function resolveTurn(pays){
   }
   // effets immédiats
   for(let p=0;p<N;p++){
-    if(live[p]==='Kelma'){
+    if(live[p]==='Parole'){
       R.kelma[p]={v:pays[p].kv,turn:R.turn,held:false};
-      await banner('Kelma ! « '+pays[p].kv+' »',kind(p),1000);
+      await banner('Parole ! « '+pays[p].kv+' »',kind(p),1000);
     }
-    if(live[p]==='Fal'){if(p===0)await showFal();else await banner('Fal !','bot',600);}
+    if(live[p]==='Présage'){if(p===0)await showFal();else await banner('Présage !','bot',600);}
   }
   // initiative
-  const rank=p=>live[p]==='Zerba'?99:(live[p]==='Sber'?-1:prio(p));
+  const rank=p=>live[p]==='Hâte'?99:(live[p]==='Patience'?-1:prio(p));
   const order=[...Array(N).keys()].sort(cmp(rank));
   UI.reveal.order={};order.forEach((p,i)=>UI.reveal.order[p]=i+1);
   render();await beat(520);
@@ -858,7 +858,7 @@ async function resolveTurn(pays){
       if(ex){
         ex.pool.push(m.card);ex.plays.push(m);if(!ex.parts.includes(p))ex.parts.push(p);ex.last=p;
         const pts=ex.pool.length===3?3:5;
-        await banner((pts===3?'Btlata':'Bkhmsa')+' ! +'+pts,kind(p),800);
+        await banner((pts===3?'Trois':'Cinq')+' ! +'+pts,kind(p),800);
         continue;
       }
       const f=R.exch?fresh.find(x=>ent(x.p)!==ent(p)&&x.zone===m.zone&&x.card.v===m.card.v&&onBoard(x.card)):null;
@@ -868,7 +868,7 @@ async function resolveTurn(pays){
         fresh.splice(fresh.indexOf(f),1);f.play.done=false;
         exs.push({zone:m.zone,v:m.card.v,pool:[f.card,m.card],plays:[f.play,m],parts:[f.p,p],last:p});
         render();
-        await banner('Bouahd ! +1',kind(p),800);
+        await banner('Un ! +1',kind(p),800);
         continue;
       }
       const r=calc(p,m.card,m.zone);r.play=m;
@@ -876,13 +876,13 @@ async function resolveTurn(pays){
       if(r.kind==='free')fresh.push({p,card:m.card,zone:m.zone,play:m});
       lastKind[p]=r.kind;
     }
-    if(live[p]==='Khatf')await doKhatf(p,pays[p].kt);
-    if(live[p]==='Aoud'&&R.reserve.length){
+    if(live[p]==='Rafle')await doKhatf(p,pays[p].kt);
+    if(live[p]==='Encore'&&R.reserve.length){
       R.hands[p].push(R.reserve.pop());render();pop(ent(p),'+1 carte');await beat(320);
     }
   }
   for(const x of exs){const w=await finalizeExchange(x);lastKind[w]='exch';}
-  for(const p of order){if(live[p]==='Chergui')await doChergui(p,pays[p].cz);}
+  for(const p of order){if(live[p]==='Vent')await doChergui(p,pays[p].cz);}
   R.curPlays=null;UI.reveal=null;UI.hl=new Set();render();
   if(lastT&&R.qaa&&lastKind[R.dealer]!=='free'){
     addPts(ent(R.dealer),'qaa',2);
@@ -944,25 +944,25 @@ function botBaroud(p,pick){
   const oppBar=R.bar.reduce((a,b,q)=>a+(q!==p&&ent(q)!==e?b.length:0),0);
   for(const n of shuffle(R.bar[p].slice())){
     const m=mech(n);if(sc<m)continue;
-    if(n==='Kelma'&&!last&&R.turn<R.total-1){
+    if(n==='Parole'&&!last&&R.turn<R.total-1){
       let best=null,bc=0;
       for(const v of SEQ){
         const c=hand.filter(x=>x.v===v&&x.id!==pick.card.id).length+R.souk.filter(x=>x.v===v).length+R.medina.filter(x=>x.card.v===v).length;
         if(c>bc){bc=c;best=v;}
       }
-      if(best&&bc>=2&&Math.random()<.8*k+.1)return {...base,bar:'Kelma',kv:best};
+      if(best&&bc>=2&&Math.random()<.8*k+.1)return {...base,bar:'Parole',kv:best};
     }
-    if(n==='Qontra'&&oppBar&&Math.random()<.3*k)return {...base,bar:'Qontra'};
-    if(n==='Zerba'){const r=calc(p,pick.card,pick.zone);if(r.kind!=='free'&&Math.random()<.45*k)return {...base,bar:'Zerba'};}
-    if(n==='Sber'){const r=calc(p,pick.card,pick.zone);if(r.kind==='free'&&Math.random()<.3*k)return {...base,bar:'Sber'};}
-    if(n==='Khatf'&&sc>=m+1&&freeTargets().length&&Math.random()<.5*k)return {...base,bar:'Khatf'};
-    if(n==='Aoud'&&sc>=m+1&&canAoud(p)&&R.cap[p]<5){
+    if(n==='Contre'&&oppBar&&Math.random()<.3*k)return {...base,bar:'Contre'};
+    if(n==='Hâte'){const r=calc(p,pick.card,pick.zone);if(r.kind!=='free'&&Math.random()<.45*k)return {...base,bar:'Hâte'};}
+    if(n==='Patience'){const r=calc(p,pick.card,pick.zone);if(r.kind==='free'&&Math.random()<.3*k)return {...base,bar:'Patience'};}
+    if(n==='Rafle'&&sc>=m+1&&freeTargets().length&&Math.random()<.5*k)return {...base,bar:'Rafle'};
+    if(n==='Encore'&&sc>=m+1&&canAoud(p)&&R.cap[p]<5){
       let pair=null;
       for(const a of hand)for(const c of hand)if(!pair&&a.id<c.id&&a.v===c.v)pair=[a,c];
-      if(pair&&Math.random()<.85*k)return {cards:[{card:pair[0],zone:'M'},{card:pair[1],zone:'M'}],bar:'Aoud'};
+      if(pair&&Math.random()<.85*k)return {cards:[{card:pair[0],zone:'M'},{card:pair[1],zone:'M'}],bar:'Encore'};
     }
-    if(n==='Fal'&&sc>=m+1&&Math.random()<.12*k)return {...base,bar:'Fal'};
-    if(n==='Chergui'&&!last&&sc>=m+1&&R.medina.some(x=>x.owner!==null&&ent(x.owner)!==e)&&Math.random()<.4*k)return {...base,bar:'Chergui'};
+    if(n==='Présage'&&sc>=m+1&&Math.random()<.12*k)return {...base,bar:'Présage'};
+    if(n==='Vent'&&!last&&sc>=m+1&&R.medina.some(x=>x.owner!==null&&ent(x.owner)!==e)&&Math.random()<.4*k)return {...base,bar:'Vent'};
   }
   return base;
 }
@@ -1006,10 +1006,10 @@ async function runRound(){
     for(let p=0;p<R.N;p++){
       const k=R.kelma[p];if(!k)continue;
       const hold=R.poudre?3:1,brk=R.poudre?1:2;
-      if(k.held){addPts(ent(p),'kelma',hold);await banner('Kelma tenue ! +'+hold,kind(p),900);}
+      if(k.held){addPts(ent(p),'kelma',hold);await banner('Parole tenue ! +'+hold,kind(p),900);}
       else{
         for(let e=0;e<R.E;e++)if(e!==ent(p))addPts(e,'kelma',brk);
-        await banner('Kelma rompue ! +'+brk,kind(p)==='pt'?'bot':'pt',900);
+        await banner('Parole rompue ! +'+brk,kind(p)==='pt'?'bot':'pt',900);
       }
     }
   }
@@ -1058,7 +1058,7 @@ function tableRows(){
   rows.push(['Annonces','ann'],['Missa','missa']);
   if(R.exch)rows.push(['Échanges','exch']);
   if(R.qaa)rows.push(['Dernière capture','qaa']);
-  if(R.baroud)rows.push(['Mèches','meche'],['Kelma','kelma']);
+  if(R.baroud)rows.push(['Mèches','meche'],['Parole','kelma']);
   if(R.moul)rows.push(['Moul Souk','moul']);
   if(R.poudre)rows.push(['Poudrière','pot']);
   return rows.map(([l,k])=>({l,k,v:R.sc.map(s=>s[k])}));
@@ -1140,9 +1140,9 @@ const LESSONS=[
     {msg:'La chaîne 3 → 4 emporte sa pile.',me:['3E','S'],bots:{1:['1C','M'],2:['10D','M']}},
     {msg:'Vide le Souk : Missa !',me:['2E','S'],bots:{1:['5B','M'],2:['1D','M']}}]},
   {name:'Baroud',mode:'ffa3',total:2,dealer:2,exch:false,qaa:false,makla:false,baroud:true,
-   rig:{hands:[['6B','5B','7B','2E'],['5C','1C','4C','12C'],['6E','12E','11E','10C']],souk:['6C'],bar:[['Qontra'],['Khatf'],['Zerba']]},
+   rig:{hands:[['6B','5B','7B','2E'],['5C','1C','4C','12C'],['6E','12E','11E','10C']],souk:['6C'],bar:[['Contre'],['Rafle'],['Hâte']]},
    steps:[
-    {msg:'Qontra : éteins le Khatf.',me:['6B','S'],mb:{bar:'Qontra',qt:1},bots:{1:['5C','S'],2:['6E','M']},bb:{1:{bar:'Khatf',kt:'6C'},2:{bar:'Zerba'}}},
+    {msg:'Contre : éteins Rafle.',me:['6B','S'],mb:{bar:'Contre',qt:1},bots:{1:['5C','S'],2:['6E','M']},bb:{1:{bar:'Rafle',kt:'6C'},2:{bar:'Hâte'}}},
     {msg:'Vide le Souk : Missa !',me:['5B','S'],bots:{1:['1C','M'],2:['12E','M']}}]}
 ];
 function startLesson(i){
@@ -1270,7 +1270,7 @@ function zoneHTML(z){
     });
   }
   const mineCls='slot mine'+(placed?' placed':'')+(UI.phase==='select'&&!placed?' target':'');
-  const ready=UI.phase==='select'&&(UI.picked||UI.dragOver)&&(!UI.sel||(UI.bar==='Aoud'&&!UI.sel2))?' ready':'';
+  const ready=UI.phase==='select'&&(UI.picked||UI.dragOver)&&(!UI.sel||(UI.bar==='Encore'&&!UI.sel2))?' ready':'';
   const over=UI.dragOver===z?' over':'';
   const hint=UI.allow&&UI.allow.zone===z&&UI.phase==='select'?' hint':'';
   const nCards=arr.length+(ptiles?R.E:0);
@@ -1280,11 +1280,11 @@ function zoneHTML(z){
     <div class="slots"><div class="rs">${rs}</div><div class="${mineCls}">${mine}</div></div></div>`;
 }
 function readySel(){
-  return !!(UI.sel&&(UI.bar!=='Aoud'||UI.sel2)&&(UI.bar!=='Kelma'||UI.kv));
+  return !!(UI.sel&&(UI.bar!=='Encore'||UI.sel2)&&(UI.bar!=='Parole'||UI.kv));
 }
 function barDisabled(n){
   const R=G.R,A=UI.allow,last=R.turn===R.total,c=mech(n);
-  return (c>0&&tot(0)<c)||(last&&(n==='Kelma'||n==='Chergui'))||(n==='Aoud'&&!canAoud(0))||!!(A&&A.bar!==n);
+  return (c>0&&tot(0)<c)||(last&&(n==='Parole'||n==='Vent'))||(n==='Encore'&&!canAoud(0))||!!(A&&A.bar!==n);
 }
 function trayHTML(){
   const R=G.R;
@@ -1292,7 +1292,7 @@ function trayHTML(){
   const A=UI.allow;
   return '<div class="btray">'+R.bar[0].map(n=>{
     const dis=barDisabled(n),on=UI.bar===n;
-    return `<button class="bcard${on?' on':''}${dis?' dis':''}${(A&&A.bar===n&&!on)?' hint':''}" data-b="${n}"><b>${BARS[n].ar}</b><small>${n}${on&&n==='Kelma'&&UI.kv?' · '+UI.kv:''}</small><i>${'●'.repeat(mech(n))}</i></button>`;
+    return `<button class="bcard${on?' on':''}${dis?' dis':''}${(A&&A.bar===n&&!on)?' hint':''}" data-b="${n}"><b>${BARS[n].ar}</b><small>${n}${on&&n==='Parole'&&UI.kv?' · '+UI.kv:''}</small><i>${'●'.repeat(mech(n))}</i></button>`;
   }).join('')+'<button class="binfo" id="binfo" aria-label="Cartes Baroud">?</button></div>';
 }
 function meHTML(){
@@ -1300,15 +1300,15 @@ function meHTML(){
   const used=new Set([UI.sel&&UI.sel.card.id,UI.sel2&&UI.sel2.card.id]);
   const hand=R.hands[0].slice().sort((a,b)=>a.v-b.v||a.s.localeCompare(b.s)).filter(c=>!used.has(c.id));
   const A=UI.allow;
-  const nextCode=A&&UI.phase==='select'?((UI.bar==='Aoud'&&UI.sel)?A.c2:A.code):null;
+  const nextCode=A&&UI.phase==='select'?((UI.bar==='Encore'&&UI.sel)?A.c2:A.code):null;
   const allowId=nextCode?(hand.find(c=>c.code===nextCode)||{}).id:null;
   const hh=hand.map(c=>cardHTML(c,'hcard'+(UI.picked===c.id?' picked':'')+(allowId===c.id?' hint':''),`role="button" tabindex="0" aria-label="${c.v} de ${SN[c.s]}"`)).join('');
   const ok=UI.phase==='select'&&readySel();
-  return `<div class="mestats"><div class="av me" style="width:34px;height:34px;font-size:17px">ا${R.dealer===0?'<span class="dbadge">D</span>':''}<span class="pr" title="Priorité à égalité">${prio(0)}</span></div>
+  return `<div class="mestats"><div class="av me" style="width:34px;height:34px;font-size:17px">T${R.dealer===0?'<span class="dbadge">D</span>':''}<span class="pr" title="Priorité à égalité">${prio(0)}</span></div>
     <div class="who"><b>Toi${R.teams?' <em class="tag">avec '+AIS[1].n+'</em>':''}</b><div class="stat"><span class="gauge" aria-label="Plafond Médina ${R.cap[0]} sur 6"><svg class="ico"><use href="#ic-dome"/></svg>${gaugeMini(0).replace(/<i /g,'<i style="width:7px;height:7px" ')}</span>${R.teams?'':pileChip(0)}</div></div>${R.teams?'':'<div class="score" data-score="0">'+tot(0)+'</div>'}</div>
     ${trayHTML()}
     <div class="hand" id="hand">${hh}</div>
-    <button class="wach${A&&ok?' hint':''}" id="wach" ${ok?'':'disabled'}>Wach !</button>`;
+    <button class="wach${A&&ok?' hint':''}" id="wach" ${ok?'':'disabled'}>Retournez !</button>`;
 }
 function renderCoach(){
   const el=$('#coach'),R=G.R;
@@ -1414,7 +1414,7 @@ function nudge(){const el=$('#coach');if(el.hidden)return;el.classList.remove('s
 function tryPlace(cid,zone){
   const R=G.R;if(!R||UI.phase!=='select')return;
   const c=R.hands[0].find(x=>x.id===cid);if(!c)return;
-  const A=UI.allow,second=UI.bar==='Aoud'&&!!UI.sel;
+  const A=UI.allow,second=UI.bar==='Encore'&&!!UI.sel;
   if(A){
     const ec=second?A.c2:A.code,ez=second?A.z2:A.zone;
     if(c.code!==ec||zone!==ez){UI.picked=null;render();nudge();return;}
@@ -1426,15 +1426,15 @@ function toggleBar(n){
   if(UI.phase!=='select')return;
   if(barDisabled(n)){nudge();return;}
   if(UI.bar===n){
-    if(n==='Kelma'){pickValue();return;}
+    if(n==='Parole'){pickValue();return;}
     UI.bar=null;UI.kv=null;UI.sel2=null;render();return;
   }
   UI.bar=n;UI.kv=null;UI.sel2=null;render();
-  if(n==='Kelma')pickValue();
+  if(n==='Parole')pickValue();
 }
 function pickValue(){
   const A=UI.allow;
-  openSheet('<h2>Kelma</h2><div class="sub">Quelle valeur ?</div><div class="vgrid">'+SEQ.map(v=>`<button class="vb" data-v="${v}">${v}</button>`).join('')+'</div><button class="btn" id="vNo" style="width:100%;background:var(--panel2);color:var(--fg)">Retirer</button>');
+  openSheet('<h2>Parole</h2><div class="sub">Quelle valeur ?</div><div class="vgrid">'+SEQ.map(v=>`<button class="vb" data-v="${v}">${v}</button>`).join('')+'</div><button class="btn" id="vNo" style="width:100%;background:var(--panel2);color:var(--fg)">Retirer</button>');
   document.querySelectorAll('.vb').forEach(b=>b.onclick=()=>{
     const v=+b.dataset.v;
     if(A&&A.kv&&v!==A.kv){nudge();return;}
@@ -1516,7 +1516,7 @@ $('#me').addEventListener('click',e=>{
   if(e.target.closest('#wach')&&UI.phase==='select'&&readySel()){
     const A=UI.allow;
     const cards=[{card:UI.sel.card,zone:UI.sel.zone}];
-    if(UI.bar==='Aoud')cards.push({card:UI.sel2.card,zone:UI.sel2.zone});
+    if(UI.bar==='Encore')cards.push({card:UI.sel2.card,zone:UI.sel2.zone});
     const pay={cards,bar:UI.bar,kv:UI.kv,kt:A&&A.kt,cz:A&&A.cz,qt:A&&A.qt};
     UI.phase='busy';UI.resolveSel&&UI.resolveSel(pay);UI.resolveSel=null;
   }
@@ -1569,12 +1569,12 @@ const HL={log:[],pending:[],cur:null};
 const HFR={B:'♣',C:'♥',E:'♠',D:'♦'},HFV={1:'A',10:'J',11:'Q',12:'K'},HSH={B:'Bât.',C:'Cou.',E:'Ép.',D:'Den.'};
 function Hn(p){
   if(typeof seatName==='function')return seatName(p);
-  return p===0?'Toi':(G.tuto?'Le Marchand':BOTS[G.cfg.level].n);
+  return p===0?'Toi':(G.tuto?'Louis':BOTS[G.cfg.level].n);
 }
 function HEn(e){return (typeof entName==='function')?entName(e):Hn(e);}
 function Hcard(c){return (HFV[c.v]||c.v)+HFR[c.s];}
 const HZ={S:'Souk',M:'Médina'};
-const HK={ann:'annonce',missa:'Missa',exch:'échange',qaa:'Dernière capture',moul:'Moul Souk',meche:'mèche',kelma:'Kelma',pot:'Poudrière'};
+const HK={ann:'annonce',missa:'Missa',exch:'échange',qaa:'Dernière capture',moul:'Moul Souk',meche:'mèche',kelma:'Parole',pot:'Poudrière'};
 function Hround(){return G.match?G.match.round:0;}
 function Hesc(s){return String(s).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));}
 function HLpts(e,k,g){
@@ -1596,7 +1596,7 @@ applyRes=async function(r){
   }
   return _Hap2(r);
 };
-const HSKIP=/^((Zerba|Sber|Aoud|Fal|Qontra|Khatf|Kelma|Chergui) !$)|^(Wach|Refresh|Le Donneur distribue|Tu donnes|.+ donne$|Ronda|Tringa|Missa|Dernière capture|Moul Souk|Kelma tenue|Kelma rompue|Poudrière|Poudre)/;
+const HSKIP=/^((Hâte|Patience|Encore|Présage|Contre|Rafle|Parole|Vent) !$)|^(Retournez|Refresh|Le Donneur distribue|Tu donnes|.+ donne$|Ronda|Tringa|Missa|Dernière capture|Moul Souk|Parole tenue|Parole rompue|Poudrière|Baroud)/;
 const _Hbn=banner;
 banner=function(txt,kd,ms){
   try{
@@ -1705,7 +1705,7 @@ const MAN_TABS=[
 <ol><li><b>Sélection.</b> Je choisis ma carte en secret.</li>
 <li><b>Pose en zone neutre.</b> « 3, 2, 1 » : je pose ma carte, face cachée, sur la zone neutre. Elle est alors <b>scellée</b>.</li>
 <li><b>Glissement.</b> Quand tout le monde a posé, je glisse ma carte sur la zone de mon choix.</li>
-<li><b>Révélation.</b> « Wach ! » : on retourne ensemble.</li>
+<li><b>Révélation.</b> On annonce « Retournez ! » et chacun retourne sa carte.</li>
 <li><b>Résolution.</b> Dans l’ordre d’initiative.</li>
 <li><b>Fin de tour.</b> On passe au suivant.</li></ol>
 <div class="note"><b>Règle de la zone neutre.</b> À chaque tour, <b>tous les joueurs, sans exception, doivent d’abord poser leur carte sur la zone neutre</b> : la carte est scellée et <b>ne revient jamais en main</b>. Ce n’est qu’ensuite, une fois toutes les cartes posées, que chacun peut la glisser sur la zone de son choix. Personne ne glisse avant que tout le monde ait posé.</div>
@@ -1749,9 +1749,9 @@ const MAN_TABS=[
 <tr><td>Coup du Café</td><td>6</td><td>tours 3, 5</td><td>+3</td><td>1 manche</td></tr>
 <tr><td>Light</td><td>8</td><td>tours 3, 5, 7</td><td>+4</td><td>2 manches</td></tr>
 <tr><td>Standard</td><td>12</td><td>tours 3, 5, 7, 9, 11</td><td>+5</td><td>2 manches</td></tr>
-<tr><td>Kbira</td><td>14</td><td>tours 3, 5, 7, 9, 11</td><td>+5</td><td>2 manches</td></tr></table>
+<tr><td>Grande</td><td>14</td><td>tours 3, 5, 7, 9, 11</td><td>+5</td><td>2 manches</td></tr></table>
 <div class="note"><b>Première partie ?</b> Joue Light, sans module. Les modules s’ajoutent ensuite, un seul à la fois.</div>
-<h3>Kbira (14 tours)</h3>
+<h3>Grande (14 tours)</h3>
 <p>On joue toutes ses cartes : les mains finissent vides. Votre dernière carte est un secret à planifier. Avec Échanges, on ne peut surenchérir que si l’on garde assez de cartes pour les tours restants.</p>
 <h3>Plusieurs joueurs</h3>
 <p>À trois ou à quatre : 6 tours, distributions aux tours 3 et 5, jeton Moul Souk +3 (en 2 contre 2 : +4). Voir l’onglet « À plusieurs ».</p>`},
@@ -1767,10 +1767,10 @@ const MAN_TABS=[
 <h3>Un duel d’enchères</h3>
 <p>Quand deux joueurs révèlent la <b>même valeur dans la même zone</b> et que la <b>première carte reste libre</b> (elle n’a rien capturé, pas même par Ronda), un échange s’ouvre au lieu de la capture ordinaire.</p>
 <table><tr><th>Cri</th><th>Cartes</th><th>Points</th></tr>
-<tr><td>Bouahd</td><td>la 2ᵉ carte posée</td><td>+1</td></tr>
-<tr><td>Btlata</td><td>une 3ᵉ carte identique</td><td>+3</td></tr>
-<tr><td>Bkhmsa</td><td>une 4ᵉ carte, la dernière</td><td>+5</td></tr></table>
-<ul><li>Le deuxième résolveur crie <b>Bouahd</b>. Le premier peut alors <b>abattre</b> de sa main une 3ᵉ carte identique (<b>Btlata</b>) ; le deuxième peut répondre avec la 4ᵉ (<b>Bkhmsa</b>).</li>
+<tr><td>Un</td><td>la 2ᵉ carte posée</td><td>+1</td></tr>
+<tr><td>Trois</td><td>une 3ᵉ carte identique</td><td>+3</td></tr>
+<tr><td>Cinq</td><td>une 4ᵉ carte, la dernière</td><td>+5</td></tr></table>
+<ul><li>Le deuxième résolveur crie <b>Un</b>. Le premier peut alors <b>abattre</b> de sa main une 3ᵉ carte identique (<b>Trois</b>) ; le deuxième peut répondre avec la 4ᵉ (<b>Cinq</b>).</li>
 <li>Le dernier mot l’emporte : seuls ses points comptent, et il ramasse toutes les cartes de l’échange.</li>
 <li>Au Souk, ces cartes vont dans sa pile. En Médina, elles sortent du jeu.</li>
 <li>Les points d’échange sont hors plafond. Les cartes d’un échange ne font jamais de Ronda ni de Tringa.</li></ul>
@@ -1779,13 +1779,13 @@ const MAN_TABS=[
 <p>Le module ajoute une pile à la mise en place : la <b>Réserve</b>. Elle ne sert qu’à <b>compenser les cartes abattues depuis la main</b>.</p>
 <ul><li><b>Combien.</b> 5 cartes, prélevées sur les écartées avant le début de la manche. <b>1 seule carte à quatre joueurs et en 2 contre 2</b>, où la pioche ne laisse rien de plus.</li>
 <li><b>Où.</b> À part, face cachée, près du Donneur. Personne ne la regarde.</li>
-<li><b>Comment.</b> Chaque carte abattue (Btlata ou Bkhmsa) donne droit à <b>1 carte de la Réserve</b>, que <b>le Donneur remet immédiatement</b> : on ne se sert jamais soi-même.</li>
+<li><b>Comment.</b> Chaque carte abattue (Trois ou Cinq) donne droit à <b>1 carte de la Réserve</b>, que <b>le Donneur remet immédiatement</b> : on ne se sert jamais soi-même.</li>
 <li><b>Réserve vide.</b> La carte de compensation est perdue, mais les points et les cartes de l’échange sont conservés.</li>
 <li><b>Jamais le paquet.</b> On ne compense jamais depuis le paquet du Donneur : les deux piles ne se mélangent pas.</li>
-<li><b>Partagée avec le Baroud.</b> La Réserve est unique : le Baroud met toujours en place la sienne (5 cartes) pour compenser l’Aoud. Elle est distincte de la poudre, qui est une réserve de jetons.</li></ul>
+<li><b>Partagée avec le Baroud.</b> La Réserve est unique : le Baroud met toujours en place la sienne (5 cartes) pour compenser Encore. Elle est distincte de la poudre, qui est une réserve de jetons.</li></ul>
 <h3>Cas particuliers</h3>
 <ul><li><b>Ronda en place.</b> Si tu as une paire garée et qu’un adversaire joue la même valeur au même tour, l’échange a lieu : ta carte compte comme libre, les deux cartes sortent du jeu, et la Tringa n’est pas complétée.</li>
-<li><b>À trois joueurs.</b> Une 3ᵉ carte identique révélée au même tour est un Btlata automatique pour son joueur.</li>
+<li><b>À trois joueurs.</b> Une 3ᵉ carte identique révélée au même tour est un Trois automatique pour son joueur.</li>
 <li><b>2 contre 2.</b> Voir ci-dessous.</li></ul>
 <h3>Échanges en 2 contre 2</h3>
 <ul><li>L’échange ne se joue <b>qu’entre adversaires</b>, jamais entre coéquipiers : si deux partenaires posent la même valeur, c’est une capture ordinaire, sans échange.</li>
@@ -1806,22 +1806,22 @@ const MAN_TABS=[
 <h3>Huit cartes d’action : les 8 et les 9</h3>
 <p>Ce sont les 8 et les 9 du jeu français, écartés hors Baroud. Chaque joueur en reçoit, et les joue <b>glissées sous sa carte du tour</b> (une seule par tour), face cachée jusqu’à la révélation.</p>
 <table><tr><th>Carte</th><th>Effet</th></tr>
-<tr><td><b>Zerba</b> · 8♣</td><td>Tu résous en premier.</td></tr>
-<tr><td><b>Sber</b> · 8♥</td><td>Tu résous en dernier.</td></tr>
-<tr><td><b>Qontra</b> · 8♠</td><td>Annule la Baroud adverse (se résout avant tout). Deux Qontra qui se visent s’annulent.</td></tr>
-<tr><td><b>Kelma</b> · 8♦</td><td>Annonce une valeur (pas au dernier tour). Capture-la plus tard : +1 (à trois : +3). Sinon l’adversaire marque +2 (à trois : +1 chacun).</td></tr>
-<tr><td><b>Aoud</b> · 9♣</td><td>Deux cartes ce tour, +1 carte de la Réserve.</td></tr>
-<tr><td><b>Fal</b> · 9♥</td><td>Regarde 3 cartes écartées.</td></tr>
-<tr><td><b>Khatf</b> · 9♠</td><td>Après ta carte, prends une carte libre du plateau (jamais une carte d’échange).</td></tr>
-<tr><td><b>Chergui</b> · 9♦</td><td>En fin de tour (pas au dernier), toutes les cartes libres d’une zone glissent vers l’autre.</td></tr></table>
-<h3>Poudre et mèches</h3>
-<ul><li>En duel : 2 cartes Baroud chacun et 3 jetons de poudre. Une mèche se paie avec ses jetons, dans la <b>Poudrière</b> : Aoud 1, Khatf 1, Chergui 1, les autres sont gratuites. Une Baroud impayable ne peut pas être jouée.</li>
+<tr><td><b>Hâte</b> · 8♣</td><td>Tu résous en premier.</td></tr>
+<tr><td><b>Patience</b> · 8♥</td><td>Tu résous en dernier.</td></tr>
+<tr><td><b>Contre</b> · 8♠</td><td>Annule la carte Baroud adverse (se résout avant tout). Deux Contre qui se visent s’annulent.</td></tr>
+<tr><td><b>Parole</b> · 8♦</td><td>Annonce une valeur (pas au dernier tour). Capture-la plus tard : +1 (à trois : +3). Sinon l’adversaire marque +2 (à trois : +1 chacun).</td></tr>
+<tr><td><b>Encore</b> · 9♣</td><td>Deux cartes ce tour, +1 carte de la Réserve.</td></tr>
+<tr><td><b>Présage</b> · 9♥</td><td>Regarde 3 cartes écartées.</td></tr>
+<tr><td><b>Rafle</b> · 9♠</td><td>Après ta carte, prends une carte libre du plateau (jamais une carte d’échange).</td></tr>
+<tr><td><b>Vent</b> · 9♦</td><td>En fin de tour (pas au dernier), toutes les cartes libres d’une zone glissent vers l’autre.</td></tr></table>
+<h3>Baroud et mèches</h3>
+<ul><li>En duel : 2 cartes Baroud chacun et 3 jetons de poudre. Une mèche se paie avec ses jetons, dans la <b>Poudrière</b> : Encore 1, Rafle 1, Vent 1, les autres sont gratuites. Une carte Baroud impayable ne peut pas être jouée.</li>
 <li>Fin de manche : le plus riche prend la Poudrière. Égalité : le pot est reporté.</li>
-<li>Kelma est évaluée au décompte, avant le Moul Souk.</li>
-<li>La Réserve de 5 cartes est toujours mise en place avec le Baroud (pour l’Aoud) : voir « Échanges ».</li></ul>
+<li>Parole est évaluée au décompte, avant le Moul Souk.</li>
+<li>La Réserve de 5 cartes est toujours mise en place avec le Baroud (pour Encore) : voir « Échanges ».</li></ul>
 <h3>À trois et à quatre</h3>
-<ul><li><b>À trois.</b> 1 carte chacune parmi les 8, 3 jetons de poudre, Poudrière. Mèches : Khatf 2, Aoud 1, Fal 1, Chergui 1. Qontra vise la Baroud d’un adversaire au choix.</li>
-<li><b>À quatre.</b> 6 cartes (sans Aoud ni Fal), 1 chacune, mèches gratuites, pas de Poudrière. Kelma : +1 si tenue, +2 à chaque adversaire sinon.</li>
+<ul><li><b>À trois.</b> 1 carte chacune parmi les 8, 3 jetons de poudre, Poudrière. Mèches : Rafle 2, Encore 1, Présage 1, Vent 1. Contre vise la carte d’un adversaire au choix.</li>
+<li><b>À quatre.</b> 6 cartes (sans Encore ni Présage), 1 chacune, mèches gratuites, pas de Poudrière. Parole : +1 si tenue, +2 à chaque adversaire sinon.</li>
 <li>Moul Souk : il garde la valeur du jeu de base avec le Baroud.</li></ul>`},
  {id:'multi',t:'À plusieurs',h:`
 <h3>À trois ou à quatre joueurs</h3>
@@ -1860,7 +1860,7 @@ const MAN_TABS=[
 <p><b>Valeurs :</b> Roi · Dame · Valet · 7 · 6 · 5 · 4 · 3 · 2 · As.</p>
 <p><b>Chaîne :</b> As → 2 → 3 → 4 → 5 → 6 → 7 → Valet → Dame → Roi, deux marches, jamais vers le bas.</p>
 <p><b>Score :</b> 5 jetons = un bâtonnet.</p>
-<p><b>Tour :</b> sélection · pose en zone neutre (tous, scellée) · glissement · Wach ! · résolution.</p>`}
+<p><b>Tour :</b> sélection · pose en zone neutre (tous, scellée) · glissement · Retournez ! · résolution.</p>`}
 ];
 const MAN={tab:'base'};
 function Mopen(tab){
@@ -2108,20 +2108,20 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){const m=document.ge
   /* texte d’une bannière → son */
   S.banner=function(txt,kind){
     const t=String(txt).replace(/<[^>]+>/g,''),mine=kind!=='bot';
-    if(/^Wach/.test(t))return S.play('reveal');
+    if(/^Retournez/.test(t))return S.play('reveal');
     if(/Ronda/.test(t))return S.play('ronda',mine);
     if(/Tringa/.test(t))return S.play('tringa',mine);
     if(/Missa/.test(t))return S.play('missa');
     if(/Dernière capture/.test(t))return S.play('last');
     if(/Moul Souk/.test(t))return S.play('moul');
-    if(/Bouahd/.test(t))return S.play('cry',0);
-    if(/Btlata/.test(t))return S.play('cry',1);
-    if(/Bkhmsa/.test(t))return S.play('cry',2);
+    if(/^Un !/.test(t))return S.play('cry',0);
+    if(/^Trois !/.test(t))return S.play('cry',1);
+    if(/^Cinq !/.test(t))return S.play('cry',2);
     if(/prend l’échange/.test(t))return S.play('cry',1);
-    if(/Poudrière|Poudre/.test(t))return S.play('powder');
-    if(/Qontra/.test(t))return S.play('qontra');
-    if(/Kelma/.test(t))return S.play('kelma');
-    if(/Zerba|Sber|Aoud|Fal|Khatf|Chergui/.test(t))return S.play('baroud');
+    if(/Poudr/.test(t))return S.play('powder');
+    if(/Contre/.test(t))return S.play('qontra');
+    if(/Parole/.test(t))return S.play('kelma');
+    if(/Hâte|Patience|Encore|Présage|Rafle|Vent/.test(t))return S.play('baroud');
     if(/distribue|Refresh|donne/.test(t))return S.play('deal');
   };
   const wrap=(name,fn)=>{if(typeof window[name]!=='function')return;const o=window[name];window[name]=fn(o);};
