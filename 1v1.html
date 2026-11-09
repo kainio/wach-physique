@@ -808,6 +808,12 @@ table.sum small{display:block;color:var(--mute);font-weight:400;font-size:calc(1
 .ss select{appearance:none;-webkit-appearance:none;min-height:calc(42*var(--u));max-width:60%;border:calc(1*var(--u)) solid var(--line);border-radius:calc(12*var(--u));padding:calc(8*var(--u)) calc(34*var(--u)) calc(8*var(--u)) calc(12*var(--u));font:600 calc(14*var(--u)) 'Hanken Grotesk',sans-serif;color:var(--fg);background:var(--panel) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round'/></svg>") no-repeat right calc(12*var(--u)) center}
 #stg a.btn,#stg .btn{display:flex;align-items:center;justify-content:center;background:var(--panel2);color:var(--fg);min-height:calc(46*var(--u))}
 
+/* logo et marque au centre de l'écran d'accueil, bouton retour au menu principal */
+#home .hero{margin-top:auto;margin-bottom:auto;padding:calc(8*var(--u)) 0}
+#home .hbox{margin-top:0}
+#home .hback{position:absolute;left:calc(14*var(--u));top:max(calc(12*var(--u)),env(safe-area-inset-top));z-index:3;color:#F1E7D5;background:#14090855;padding:calc(9*var(--u)) calc(14*var(--u));border-radius:calc(14*var(--u));font:700 calc(14*var(--u))/1 'Hanken Grotesk',sans-serif;text-decoration:none}
+#home .hback:active{filter:brightness(1.2)}
+
 /* ===== manuel du joueur ===== */
 #man{position:absolute;inset:0;z-index:47;background:var(--bg);color:var(--fg);display:flex;flex-direction:column}
 #man header{display:flex;align-items:center;gap:calc(10*var(--u));padding:calc(14*var(--u)) calc(16*var(--u)) calc(6*var(--u))}
@@ -2914,6 +2920,8 @@ openSheet=function(html,mid){
     e.classList.remove('wait');
     await _beat(1);
   }
+  /* attente réelle : le mode accéléré (appui sur le plateau) ne la raccourcit pas, pour laisser finir les animations du panneau */
+  async function hold(ms){const t=G.tok;await new Promise(r=>setTimeout(r,ms));if(t!==G.tok)throw (typeof ABORT!=='undefined'?ABORT:new Error('abort'));}
   const off=()=>(typeof G==='undefined'||!G.R||G.tuto);
   let cur=null;
   /* ---------- éléments visuels ---------- */
@@ -2979,7 +2987,7 @@ openSheet=function(html,mid){
         e.classList.add('on');xo.className='xo big';xo.innerHTML=orderHTML(cur.done,null,true);
         xs.innerHTML='<div class="xcap">Ordre de résolution</div>';
       }
-      if(mode==='step')await minWait();else if(read)await beat(read);
+      if(mode==='step')await minWait();else if(read)await hold(Math.max(read*m.k,1000));
     }
     let res='';
     if(ex){
@@ -2988,7 +2996,7 @@ openSheet=function(html,mid){
       xs.innerHTML=actionHTML(r,rv.order&&rv.order[r.p])+'<div class="xr b"></div>';
       try{res=resultHTML(r);}catch(x){res='';}
     }
-    if(pre)await beat(pre);
+    if(pre)await hold(Math.max(pre*m.k,650));
     const out=await _ap(r);
     const rec=HL.cur&&HL.cur.res[HL.cur.res.length-1];
     cur.done.add(r.p);
@@ -2997,7 +3005,7 @@ openSheet=function(html,mid){
       if(b){b.outerHTML=res.replace('</div>',ptsHTML(rec)+'</div>');}
       xo.innerHTML=orderHTML(cur.done,null,false);
     }
-    if(mode==='step')await minWait();else if(post)await beat(post);
+    if(mode==='step')await minWait();else if(post){const nc=(res.match(/class="card /g)||[]).length;await hold(Math.max(post*m.k,1000+110*nc+350));}
     return out;
   };
   const _rt=resolveTurn;
@@ -3546,11 +3554,10 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){const m=document.ge
     if(skin)root.append(sw('Mise en place guidée','Coupe et distribution étape par étape',()=>T.guide,v=>{T.guide=v;again();}));
     root.append(exSw(),paceSel());
     root.append(head('Son'));root.append(sndSw());
-    const pw=window.__pwa,ml=window.__PWA;
-    if(pw||ml){
+    const pw=window.__pwa;
+    if(pw){
       root.append(head('Application'));
       if(pw){const b=document.createElement('button');b.type='button';b.className='btn';b.textContent='Installer l’app';b.onclick=()=>{closeSheet();pw();};root.append(b);}
-      if(ml){const a=document.createElement('a');a.className='btn';a.href='index.html';a.textContent='Menu principal';a.style.textDecoration='none';root.append(a);}
     }
     document.getElementById('stgX').onclick=closeSheet;
   };
@@ -3577,6 +3584,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){const m=document.ge
         if(keepRow||n.id==='play')return;
         n.remove();
       });
+      if(window.__PWA&&!document.querySelector('#home .hback')){document.getElementById('home').insertAdjacentHTML('afterbegin','<a class="hback" href="index.html" aria-label="Retour au menu principal">‹ Menu principal</a>');}
       const row=document.createElement('div');row.className='row hmore';
       row.innerHTML='<button type="button" class="btn" id="hSet">Réglages<small>'+esc(summary())+'</small></button><button type="button" class="btn" id="hLearn">Apprendre<small>Tutoriel, manuel'+(window.__PWA?', vidéo':'')+'</small></button>';
       box.appendChild(row);
