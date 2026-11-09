@@ -843,6 +843,12 @@ table.sum small{display:block;color:var(--mute);font-weight:400;font-size:calc(1
 
 #app:has(#sheet.on) #expl{display:none}
 
+/* petit interrupteur « Commentaires » sur le panneau lui-même */
+#expl .exsw{position:absolute;top:calc(-14*var(--u));right:calc(12*var(--u));z-index:5;display:flex;align-items:center;gap:calc(5*var(--u));height:calc(24*var(--u));padding:0 calc(6*var(--u)) 0 calc(10*var(--u));border:0;border-radius:calc(12*var(--u));background:#140908e8;color:#F1E7D5;font:700 calc(11*var(--u))/1 'Hanken Grotesk',sans-serif;box-shadow:0 calc(2*var(--u)) calc(6*var(--u)) #0007;cursor:pointer}
+#expl .exsw i{position:relative;width:calc(26*var(--u));height:calc(14*var(--u));border-radius:calc(7*var(--u));background:#2FBF8C}
+#expl .exsw i::after{content:'';position:absolute;top:calc(2*var(--u));left:calc(14*var(--u));width:calc(10*var(--u));height:calc(10*var(--u));border-radius:50%;background:#fff}
+#expl.min .exsw{display:none}
+
 /* ===== accueil allégé et réglages ===== */
 .hmore{display:flex;gap:calc(10*var(--u))}
 .hmore .btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:calc(2*var(--u));line-height:1.15;padding:calc(10*var(--u)) calc(8*var(--u));background:var(--panel2);color:var(--fg)}
@@ -870,8 +876,8 @@ table.sum small{display:block;color:var(--mute);font-weight:400;font-size:calc(1
 #home .hback{position:absolute;left:calc(14*var(--u));top:max(calc(12*var(--u)),env(safe-area-inset-top));z-index:3;color:#F1E7D5;background:#14090855;padding:calc(9*var(--u)) calc(14*var(--u));border-radius:calc(14*var(--u));font:700 calc(14*var(--u))/1 'Hanken Grotesk',sans-serif;text-decoration:none}
 #home .hback:active{filter:brightness(1.2)}
 
-/* ===== mode auto : minuscule interrupteur flottant, sous l'avatar du joueur (au-dessus du commentaire, sous les menus) ===== */
-#game .autosw{position:absolute!important;left:calc(11*var(--u));right:auto;bottom:calc(120*var(--u));width:auto!important;min-width:0;flex:none;z-index:38;display:flex;flex-direction:column;align-items:center;gap:calc(3*var(--u));height:auto;padding:calc(4*var(--u)) calc(6*var(--u)) calc(5*var(--u));border:0;border-radius:calc(11*var(--u));background:#140908d0;color:#F1E7D5;font:700 calc(10*var(--u))/1 'Hanken Grotesk',sans-serif;box-shadow:0 calc(1*var(--u)) calc(5*var(--u)) #0007;cursor:pointer}
+/* ===== mode auto : minuscule interrupteur flottant, sous l'avatar du joueur (sous le commentaire et sous les menus) ===== */
+#game .autosw{position:absolute!important;left:calc(11*var(--u));right:auto;bottom:calc(120*var(--u));width:auto!important;min-width:0;flex:none;z-index:30;display:flex;flex-direction:column;align-items:center;gap:calc(3*var(--u));height:auto;padding:calc(4*var(--u)) calc(6*var(--u)) calc(5*var(--u));border:0;border-radius:calc(11*var(--u));background:#140908d0;color:#F1E7D5;font:700 calc(10*var(--u))/1 'Hanken Grotesk',sans-serif;box-shadow:0 calc(1*var(--u)) calc(5*var(--u)) #0007;cursor:pointer}
 #game .autosw[hidden]{display:none}
 #game .autosw i{position:relative;width:calc(26*var(--u));height:calc(14*var(--u));border-radius:calc(7*var(--u));background:#8f8170;transition:background .2s}
 #game .autosw i::after{content:'';position:absolute;top:calc(2*var(--u));left:calc(2*var(--u));width:calc(10*var(--u));height:calc(10*var(--u));border-radius:50%;background:#fff;transition:transform .2s}
@@ -3036,7 +3042,7 @@ openSheet=function(html,mid){
     get mode(){return mode;},
     set(m){mode=M[m]?m:'normal';try{localStorage.setItem(KEY,mode);}catch(e){}},
     get expl(){return expl;},
-    setExpl(v){expl=!!v;try{localStorage.setItem('wach_expl',expl?'1':'0');}catch(e){}if(!expl)hide();},
+    setExpl(v){expl=!!v;try{localStorage.setItem('wach_expl',expl?'1':'0');}catch(e){}if(!expl){hide();PACE.go();}document.querySelectorAll('[data-expl]').forEach(b=>{b.classList.toggle('on',expl);b.setAttribute('aria-checked',expl);});},
     labels:{fast:'Rapide',normal:'Normal',step:'Pas à pas'},
     go(){if(waiter){const w=waiter;waiter=null;w();}},
     cancel(){PACE.go();hide();}
@@ -3048,7 +3054,8 @@ openSheet=function(html,mid){
     let e=document.getElementById('expl');
     if(!e){
       e=document.createElement('div');e.id='expl';
-      e.innerHTML='<div class="xo"></div><div class="xs"></div><button class="btn pri exn" id="exNext">Suivant ▶</button>';
+      e.innerHTML='<button type="button" class="exsw" role="switch" aria-checked="true" aria-label="Commentaires des coups">Commentaires<i></i></button><div class="xo"></div><div class="xs"></div><button class="btn pri exn" id="exNext">Suivant ▶</button>';
+      e.querySelector('.exsw').onclick=ev=>{ev.stopPropagation();PACE.setExpl(false);};
       (document.getElementById('app')||document.body).appendChild(e);
       e.querySelector('#exNext').onclick=()=>PACE.go();
     }
@@ -3125,7 +3132,7 @@ openSheet=function(html,mid){
     if(off()||!UI.reveal)return _ap(r);
     const e=box(),m=M[mode],rv=UI.reveal,ex=expl,pre=ex?m.pre:0,post=ex?m.post:0,read=ex?m.read:0;
     const xo=e.querySelector('.xo'),xs=e.querySelector('.xs');
-    const minWait=async()=>{if(ex){await wait();return;}e.classList.add('on','min');await wait();e.classList.remove('on','min');};
+    const minWait=async()=>{if(expl){await wait();return;}e.classList.add('on','min');await wait();e.classList.remove('on','min');};
     if(!cur||cur.turn!==G.R.turn||cur.round!==(G.match?G.match.round:0)){
       cur={turn:G.R.turn,round:G.match?G.match.round:0,done:new Set()};
       if(ex){
@@ -3145,12 +3152,12 @@ openSheet=function(html,mid){
     const out=await _ap(r);
     const rec=HL.cur&&HL.cur.res[HL.cur.res.length-1];
     cur.done.add(r.p);
-    if(ex){
+    if(ex&&expl){
       const b=xs.querySelector('.xr.b');
       if(b){b.outerHTML=res.replace('</div>',ptsHTML(rec)+'</div>');}
       xo.innerHTML=orderHTML(cur.done,null,false);
     }
-    if(mode==='step')await minWait();else if(post){const nc=(res.match(/class="card /g)||[]).length;await hold(Math.max(post*m.k,1000+110*nc+350));}
+    if(mode==='step')await minWait();else if(post&&expl){const nc=(res.match(/class="card /g)||[]).length;await hold(Math.max(post*m.k,1000+110*nc+350));}
     return out;
   };
   const _rt=resolveTurn;
@@ -3344,7 +3351,7 @@ const MAN_TABS=[
 <p><b>Tour :</b> sélection · pose en zone neutre (tous, scellée) · glissement · Retournez ! · résolution.</p>
 <h3>Voir et comprendre les coups</h3>
 <p>Après « Retournez ! », un panneau montre en images l’<b>ordre de résolution</b> : les cartes alignées du premier au dernier, avec « = » quand deux valeurs sont égales et la pastille <b>D</b> sur le Donneur. Puis chaque coup est illustré : la carte jouée et sa zone, ce qu’elle <b>prend</b> (même valeur, puis <b>chaîne</b> en jaune), sa destination (pile avec le nombre de cartes, ou « hors jeu ») et les points gagnés. La carte qui joue est mise en avant sur le plateau, et à plusieurs chaque carte porte le <b>nom de son joueur</b>.</p>
-<p>Dans <b>Réglages</b> (accueil) ou dans la pause, le menu <b>Rythme de résolution</b> propose <b>Rapide</b>, <b>Normal</b> et <b>Pas à pas</b> : en pas à pas, un appui sur « Suivant » fait passer au coup suivant. L’interrupteur <b>Commentaires des coups</b> masque ce panneau (en pas à pas, seul le bouton « Suivant » reste).</p>
+<p>Dans <b>Réglages</b> (accueil) ou dans la pause, le menu <b>Rythme de résolution</b> propose <b>Rapide</b>, <b>Normal</b> et <b>Pas à pas</b> : en pas à pas, un appui sur « Suivant » fait passer au coup suivant. L’interrupteur <b>Commentaires des coups</b> (aussi disponible en petit sur le panneau lui-même) masque ce panneau (en pas à pas, seul le bouton « Suivant » reste).</p>
 <p><b>Apprendre en observant :</b> le <b>Mode auto</b> laisse l’IA jouer à ta place, avec le même niveau que les adversaires. Elle fait les mêmes gestes que toi : elle choisit sa carte, la pose en zone neutre, attend le « 3, 2, 1 », puis la glisse vers sa zone. Un petit interrupteur « Auto » flotte sous ton avatar pour l’activer ou le couper à tout moment (il n’existe pas dans les tutoriels) ; on peut aussi le régler dans <b>Réglages</b>. Il fonctionne avec tous les formats et tous les modules (Échanges, Dernière capture, Makla, Baroud et ses huit cartes), à deux, à trois, à quatre ou en équipes, et avance seul même en rythme « Pas à pas ».</p>
 <p>L’<b>Historique des coups</b> (pause et fin de manche) garde ces explications, dans l’ordre d’initiative, avec le <b>score final de chaque manche</b>.</p>`}
 ];
@@ -3796,7 +3803,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){const m=document.ge
   function head(t){const h=document.createElement('div');h.className='stgh';h.textContent=t;return h;}
   const paceOpts=()=>[['fast','Rapide'],['normal','Normal'],['step','Pas à pas']];
   const sndSw=()=>sw('Effets sonores','',()=>window.SND?SND.on:false,v=>{if(window.SND)SND.set(v);});
-  const exSw=()=>sw('Commentaires des coups','Panneau qui explique chaque coup',()=>PACE.expl,v=>PACE.setExpl(v));
+  const exSw=()=>{const b=sw('Commentaires des coups','Panneau qui explique chaque coup',()=>PACE.expl,v=>PACE.setExpl(v));b.setAttribute('data-expl','1');return b;};
   const autoSw=()=>{if(!window.AUTO)return document.createDocumentFragment();const b=sw('Mode auto','L’IA joue à ta place : pour apprendre en observant',()=>AUTO.on,v=>AUTO.set(v));b.setAttribute('data-auto','1');return b;};
   const paceSel=()=>sel('Rythme de résolution',paceOpts(),()=>PACE.mode,v=>PACE.set(v));
   function summary(){
