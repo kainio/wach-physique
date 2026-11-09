@@ -779,7 +779,7 @@ table.sum small{display:block;color:var(--mute);font-weight:400;font-size:calc(1
 .hfin table.sum{width:100%;margin:calc(4*var(--u)) 0 0}
 
 /* ===== rythme de résolution : panneau visuel (mini-cartes, flèches, pile) et carte active ===== */
-#expl{position:absolute;left:calc(8*var(--u));right:calc(8*var(--u));bottom:calc(10*var(--u));z-index:44;display:none;background:var(--panel,#2a1a10);color:var(--fg,#F3EEDF);border:calc(2*var(--u)) solid #ffffff44;border-radius:calc(18*var(--u));padding:calc(8*var(--u)) calc(10*var(--u)) calc(10*var(--u));box-shadow:0 calc(6*var(--u)) calc(24*var(--u)) #000a}
+#expl{position:absolute;left:calc(8*var(--u));right:calc(8*var(--u));bottom:calc(10*var(--u));z-index:35;display:none;background:var(--panel,#2a1a10);color:var(--fg,#F3EEDF);border:calc(2*var(--u)) solid #ffffff44;border-radius:calc(18*var(--u));padding:calc(8*var(--u)) calc(10*var(--u)) calc(10*var(--u));box-shadow:0 calc(6*var(--u)) calc(24*var(--u)) #000a}
 #expl.on{display:block}
 #expl .exn{display:none;width:100%;margin-top:calc(8*var(--u))}
 #expl.wait .exn{display:block}
@@ -841,6 +841,8 @@ table.sum small{display:block;color:var(--mute);font-weight:400;font-size:calc(1
 @keyframes ex-pop{0%{opacity:0;transform:scale(.3) rotate(-14deg)}60%{opacity:1;transform:scale(1.25)}100%{opacity:1;transform:none}}
 @keyframes ex-bump{0%{transform:scale(1)}40%{transform:scale(1.28)}100%{transform:scale(1)}}
 
+#app:has(#sheet.on) #expl{display:none}
+
 /* ===== accueil allégé et réglages ===== */
 .hmore{display:flex;gap:calc(10*var(--u))}
 .hmore .btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:calc(2*var(--u));line-height:1.15;padding:calc(10*var(--u)) calc(8*var(--u));background:var(--panel2);color:var(--fg)}
@@ -867,6 +869,15 @@ table.sum small{display:block;color:var(--mute);font-weight:400;font-size:calc(1
 #home .hbox{margin-top:0}
 #home .hback{position:absolute;left:calc(14*var(--u));top:max(calc(12*var(--u)),env(safe-area-inset-top));z-index:3;color:#F1E7D5;background:#14090855;padding:calc(9*var(--u)) calc(14*var(--u));border-radius:calc(14*var(--u));font:700 calc(14*var(--u))/1 'Hanken Grotesk',sans-serif;text-decoration:none}
 #home .hback:active{filter:brightness(1.2)}
+
+/* ===== mode auto : minuscule interrupteur flottant, sous l'avatar du joueur (au-dessus du commentaire, sous les menus) ===== */
+#game .autosw{position:absolute!important;left:calc(11*var(--u));right:auto;bottom:calc(120*var(--u));width:auto!important;min-width:0;flex:none;z-index:38;display:flex;flex-direction:column;align-items:center;gap:calc(3*var(--u));height:auto;padding:calc(4*var(--u)) calc(6*var(--u)) calc(5*var(--u));border:0;border-radius:calc(11*var(--u));background:#140908d0;color:#F1E7D5;font:700 calc(10*var(--u))/1 'Hanken Grotesk',sans-serif;box-shadow:0 calc(1*var(--u)) calc(5*var(--u)) #0007;cursor:pointer}
+#game .autosw[hidden]{display:none}
+#game .autosw i{position:relative;width:calc(26*var(--u));height:calc(14*var(--u));border-radius:calc(7*var(--u));background:#8f8170;transition:background .2s}
+#game .autosw i::after{content:'';position:absolute;top:calc(2*var(--u));left:calc(2*var(--u));width:calc(10*var(--u));height:calc(10*var(--u));border-radius:50%;background:#fff;transition:transform .2s}
+#game .autosw.on{background:#F4B400;color:#140908}
+#game .autosw.on i{background:#140908}
+#game .autosw.on i::after{transform:translateX(calc(12*var(--u)));background:#F4B400}
 
 /* ===== manuel du joueur ===== */
 #man{position:absolute;inset:0;z-index:47;background:var(--bg);color:var(--fg);display:flex;flex-direction:column}
@@ -3330,6 +3341,7 @@ const MAN_TABS=[
 <h3>Voir et comprendre les coups</h3>
 <p>Après « Retournez ! », un panneau montre en images l’<b>ordre de résolution</b> : les cartes alignées du premier au dernier, avec « = » quand deux valeurs sont égales et la pastille <b>D</b> sur le Donneur. Puis chaque coup est illustré : la carte jouée et sa zone, ce qu’elle <b>prend</b> (même valeur, puis <b>chaîne</b> en jaune), sa destination (pile avec le nombre de cartes, ou « hors jeu ») et les points gagnés. La carte qui joue est mise en avant sur le plateau, et à plusieurs chaque carte porte le <b>nom de son joueur</b>.</p>
 <p>Dans <b>Réglages</b> (accueil) ou dans la pause, le menu <b>Rythme de résolution</b> propose <b>Rapide</b>, <b>Normal</b> et <b>Pas à pas</b> : en pas à pas, un appui sur « Suivant » fait passer au coup suivant. L’interrupteur <b>Commentaires des coups</b> masque ce panneau (en pas à pas, seul le bouton « Suivant » reste).</p>
+<p><b>Apprendre en observant :</b> le <b>Mode auto</b> laisse l’IA jouer à ta place, avec le même niveau que les adversaires. Elle fait les mêmes gestes que toi : elle choisit sa carte, la pose en zone neutre, attend le « 3, 2, 1 », puis la glisse vers sa zone. Un petit interrupteur « Auto » flotte sous ton avatar pour l’activer ou le couper à tout moment (il n’existe pas dans les tutoriels) ; on peut aussi le régler dans <b>Réglages</b>.</p>
 <p>L’<b>Historique des coups</b> (pause et fin de manche) garde ces explications, dans l’ordre d’initiative, avec le <b>score final de chaque manche</b>.</p>`}
 ];
 const MAN={tab:'base'};
@@ -3632,6 +3644,117 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){const m=document.ge
 })();
 
 /* =====================================================================
+   MODE AUTO : l’IA joue à la place du joueur, pour apprendre en observant.
+   Elle reproduit les gestes du joueur : choix de la carte (et de la carte Baroud), pose en zone neutre,
+   compte à rebours 3·2·1, puis glissement vers la zone choisie. Désactivé dans les tutoriels.
+   ===================================================================== */
+(function(){
+  const multi=typeof MODES!=='undefined';
+  const skin=typeof Tseal==='function';
+  let on=false,driving=false;
+  const A=window.AUTO={
+    get on(){return on;},
+    set(v){
+      const was=on;
+      on=!!v&&!(typeof G!=='undefined'&&G.tuto);
+      document.querySelectorAll('[data-auto]').forEach(b=>{b.classList.toggle('on',on);b.setAttribute('aria-checked',on);});
+      if(on&&!was)kick();
+    }
+  };
+  const active=()=>on&&typeof G!=='undefined'&&G.R&&!G.tuto;
+  const pick0=()=>botBaroud(0,botPick(0));
+  const hold=async()=>{};
+  const stopped=t=>!on||t!==G.tok||UI.phase!=='select';
+  /* les gestes du joueur, un par un */
+  async function drive(pay,t){
+    if(driving)return;driving=true;
+    try{
+      await beat(650+Math.random()*700);
+      if(stopped(t))return;
+      UI.sel=null;UI.sel2=null;UI.bar=null;UI.kv=null;UI.picked=null;
+      if(skin&&UI.stage!=='pick')UI.stage='pick';
+      if(pay.bar){UI.bar=pay.bar;UI.kv=pay.kv||null;render();await beat(550);if(stopped(t))return;}
+      for(let i=0;i<pay.cards.length;i++){
+        const c=pay.cards[i];
+        if(skin)Tselect(c.card.id);
+        else{UI.picked=c.card.id;render();await beat(450);if(stopped(t))return;tryPlace(c.card.id,c.zone);}
+        await beat(550);if(stopped(t))return;
+      }
+      if(skin){
+        await Tseal();                                   // pose scellée en zone neutre + compte à rebours
+        if(!on||t!==G.tok)return;
+        for(let i=0;i<pay.cards.length;i++){
+          await beat(550);if(!on||t!==G.tok||UI.stage!=='slide')return;
+          await Tslide(pay.cards[i].zone);               // glissement vers la zone choisie
+        }
+      }else{
+        const w=document.querySelector('#wach');if(w)w.click();
+      }
+    }catch(e){if(e!==ABORT)console.error(e);}
+    finally{driving=false;}
+  }
+  function kick(){
+    try{if(active()&&UI.phase==='select'&&UI.resolveSel&&(!skin||UI.stage==='pick')){const t=G.tok;drive(pick0(),t);}}catch(e){}
+  }
+  /* le tour du joueur : l’IA agit pendant que la promesse du joueur reste ouverte (il peut reprendre la main) */
+  const _wh=waitHuman;
+  waitHuman=function(){
+    const p=_wh();
+    if(active()){const t=G.tok;setTimeout(()=>{try{if(active()&&t===G.tok&&UI.phase==='select')drive(pick0(),t);}catch(e){}},0);}
+    return p;
+  };
+  /* les choix demandés au joueur pendant la résolution */
+  const wrap=(name,fn)=>{if(typeof window[name]!=='function')return;const o=window[name];window[name]=function(){return active()?fn.apply(this,arguments):o.apply(this,arguments);};};
+  wrap('promptEscalate',()=>Promise.resolve(multi?botEscalate(0):botEscalate(true)));
+  wrap('pickTarget',(T)=>Promise.resolve(botKhatfTarget(0,T)||T[0]));
+  wrap('chooseZone',()=>Promise.resolve(botChergui(0)));
+  wrap('chooseQontra',(cands)=>Promise.resolve(botQontraTarget(0,cands)));
+  wrap('showFal',async()=>{await banner('Présage !','bot',700);});
+  wrap('Tguide',async()=>{});
+  /* fin de manche : la suite démarre toute seule après la lecture du récapitulatif */
+  const _os=openSheet;
+  openSheet=function(html,mid){
+    _os(html,mid);
+    try{
+      if(active()&&/<h2>Fin de manche<\/h2>/.test(html)){
+        const t=G.tok;
+        setTimeout(()=>{const b=document.getElementById('sNext'),h=document.querySelector('#sheet h2');if(on&&t===G.tok&&b&&h&&/Fin de manche/.test(h.textContent))b.click();},9000);
+      }
+    }catch(e){}
+  };
+  /* un petit interrupteur flottant, en bas du jeu */
+  const g=document.getElementById('game');
+  let sw=null;
+  if(g){
+    sw=document.createElement('button');sw.type='button';sw.className='autosw';sw.setAttribute('role','switch');sw.setAttribute('aria-checked','false');sw.setAttribute('aria-label','Mode auto');sw.setAttribute('data-auto','1');
+    sw.innerHTML='<span>Auto</span><i></i>';
+    sw.onclick=e=>{e.stopPropagation();A.set(!on);};
+    g.appendChild(sw);
+  }
+  const sync=()=>{if(sw)sw.hidden=!!(typeof G!=='undefined'&&G.tuto);};
+  /* l'interrupteur se cale sous l'avatar du joueur (sous la rangée Baroud s'il y en a une), à gauche de la main */
+  function place(){
+    if(!sw||sw.hidden||!g.classList.contains('on'))return;
+    const av=g.querySelector('.av.me'),gr=g.getBoundingClientRect();
+    if(av&&av.offsetParent){
+      const r=av.getBoundingClientRect(),tray=g.querySelector('#me .btray'),tr=tray&&tray.offsetParent?tray.getBoundingClientRect():null;
+      const top=Math.max(r.bottom,tr?tr.bottom:0)-gr.top+8;
+      sw.style.left=Math.round(r.left-gr.left)+'px';sw.style.top=Math.round(top)+'px';sw.style.bottom='auto';
+    }else{sw.style.left='11px';sw.style.top='auto';sw.style.bottom='120px';}
+  }
+  setInterval(place,300);
+  ['startMatch','startLesson','goHome'].forEach(n=>{
+    if(typeof window[n]!=='function')return;
+    const o=window[n];
+    window[n]=function(){
+      if(n==='startLesson')A.set(false);
+      const r=o.apply(this,arguments);
+      setTimeout(sync,0);return r;
+    };
+  });
+})();
+
+/* =====================================================================
    ACCUEIL ALLÉGÉ : Jouer, Réglages, Apprendre. Format, adversaire, modules, aides, son et rythme
    sont regroupés dans la fenêtre « Réglages » (menus déroulants et interrupteurs).
    ===================================================================== */
@@ -3657,6 +3780,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){const m=document.ge
   const paceOpts=()=>[['fast','Rapide'],['normal','Normal'],['step','Pas à pas']];
   const sndSw=()=>sw('Effets sonores','',()=>window.SND?SND.on:false,v=>{if(window.SND)SND.set(v);});
   const exSw=()=>sw('Commentaires des coups','Panneau qui explique chaque coup',()=>PACE.expl,v=>PACE.setExpl(v));
+  const autoSw=()=>{if(!window.AUTO)return document.createDocumentFragment();const b=sw('Mode auto','L’IA joue à ta place : pour apprendre en observant',()=>AUTO.on,v=>AUTO.set(v));b.setAttribute('data-auto','1');return b;};
   const paceSel=()=>sel('Rythme de résolution',paceOpts(),()=>PACE.mode,v=>PACE.set(v));
   function summary(){
     const c=G.cfg;let s='';
@@ -3682,7 +3806,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){const m=document.ge
     g.onclick=()=>{closeSheet();if(typeof openGallery==='function')openGallery();};root.append(g);
     root.append(head('Aide et affichage'));
     if(skin)root.append(sw('Mise en place guidée','Coupe et distribution étape par étape',()=>T.guide,v=>{T.guide=v;again();}));
-    root.append(exSw(),paceSel());
+    root.append(exSw(),paceSel(),autoSw());
     root.append(head('Son'));root.append(sndSw());
     const pw=window.__pwa;
     if(pw){
