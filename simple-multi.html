@@ -1879,7 +1879,11 @@ openSheet=function(html,mid){
   function hide(){const e=document.getElementById('expl');if(e){e.classList.remove('on','wait','min');}}
   async function wait(){
     const e=box();e.classList.add('wait');
+    /* en mode auto, le « pas à pas » avance tout seul après un temps de lecture (réel, non raccourci) */
+    let tm=null;
+    if(window.AUTO&&AUTO.on)tm=setTimeout(()=>PACE.go(),2600);
     await new Promise(r=>{waiter=r;});
+    if(tm)clearTimeout(tm);
     e.classList.remove('wait');
     await _beat(1);
   }
@@ -2163,7 +2167,7 @@ const MAN_TABS=[
 <h3>Voir et comprendre les coups</h3>
 <p>Après « Retournez ! », un panneau montre en images l’<b>ordre de résolution</b> : les cartes alignées du premier au dernier, avec « = » quand deux valeurs sont égales et la pastille <b>D</b> sur le Donneur. Puis chaque coup est illustré : la carte jouée et sa zone, ce qu’elle <b>prend</b> (même valeur, puis <b>chaîne</b> en jaune), sa destination (pile avec le nombre de cartes, ou « hors jeu ») et les points gagnés. La carte qui joue est mise en avant sur le plateau, et à plusieurs chaque carte porte le <b>nom de son joueur</b>.</p>
 <p>Dans <b>Réglages</b> (accueil) ou dans la pause, le menu <b>Rythme de résolution</b> propose <b>Rapide</b>, <b>Normal</b> et <b>Pas à pas</b> : en pas à pas, un appui sur « Suivant » fait passer au coup suivant. L’interrupteur <b>Commentaires des coups</b> masque ce panneau (en pas à pas, seul le bouton « Suivant » reste).</p>
-<p><b>Apprendre en observant :</b> le <b>Mode auto</b> laisse l’IA jouer à ta place, avec le même niveau que les adversaires. Elle fait les mêmes gestes que toi : elle choisit sa carte, la pose en zone neutre, attend le « 3, 2, 1 », puis la glisse vers sa zone. Un petit interrupteur « Auto » flotte sous ton avatar pour l’activer ou le couper à tout moment (il n’existe pas dans les tutoriels) ; on peut aussi le régler dans <b>Réglages</b>.</p>
+<p><b>Apprendre en observant :</b> le <b>Mode auto</b> laisse l’IA jouer à ta place, avec le même niveau que les adversaires. Elle fait les mêmes gestes que toi : elle choisit sa carte, la pose en zone neutre, attend le « 3, 2, 1 », puis la glisse vers sa zone. Un petit interrupteur « Auto » flotte sous ton avatar pour l’activer ou le couper à tout moment (il n’existe pas dans les tutoriels) ; on peut aussi le régler dans <b>Réglages</b>. Il fonctionne avec tous les formats et tous les modules (Échanges, Dernière capture, Makla, Baroud et ses huit cartes), à deux, à trois, à quatre ou en équipes, et avance seul même en rythme « Pas à pas ».</p>
 <p>L’<b>Historique des coups</b> (pause et fin de manche) garde ces explications, dans l’ordre d’initiative, avec le <b>score final de chaque manche</b>.</p>`}
 ];
 const MAN={tab:'base'};
@@ -2480,7 +2484,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){const m=document.ge
       const was=on;
       on=!!v&&!(typeof G!=='undefined'&&G.tuto);
       document.querySelectorAll('[data-auto]').forEach(b=>{b.classList.toggle('on',on);b.setAttribute('aria-checked',on);});
-      if(on&&!was)kick();
+      if(on&&!was){kick();setTimeout(resume,500);}
     }
   };
   const active=()=>on&&typeof G!=='undefined'&&G.R&&!G.tuto;
@@ -2514,6 +2518,19 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){const m=document.ge
       }
     }catch(e){if(e!==ABORT)console.error(e);}
     finally{driving=false;}
+  }
+  /* si l'auto est activé pendant une demande de choix (cible, zone, enchère, Présage) ou un « Suivant », il répond à la place du joueur */
+  function resume(){
+    try{
+      if(!active())return;
+      let b;
+      if(UI.pick&&UI.pick.res){const T=UI.pick.list,t=botKhatfTarget(0,T)||T[0],r=UI.pick.res;UI.pick=null;UI.pickMsg='';r(t);return;}
+      if((b=document.getElementById('cz1'))){(botChergui(0)==='S'?b:document.getElementById('cz2')).click();return;}
+      if((b=document.getElementById('falOk'))){b.click();return;}
+      if((b=document.querySelector('[data-q]'))){b.click();return;}
+      if(document.getElementById('xYes')){(botEscalate(multi?0:true)?document.getElementById('xYes'):document.getElementById('xNo')).click();return;}
+      if(document.querySelector('#expl.wait')&&window.PACE)PACE.go();
+    }catch(e){}
   }
   function kick(){
     try{if(active()&&UI.phase==='select'&&UI.resolveSel&&(!skin||UI.stage==='pick')){const t=G.tok;drive(pick0(),t);}}catch(e){}
