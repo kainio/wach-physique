@@ -344,6 +344,12 @@ table.sum small{display:block;color:var(--mute);font-weight:400;font-size:calc(1
 #expl .exsw i::after{content:'';position:absolute;top:calc(2*var(--u));left:calc(14*var(--u));width:calc(10*var(--u));height:calc(10*var(--u));border-radius:50%;background:#fff}
 #expl.min .exsw{display:none}
 
+/* ===== notifications à la couleur du joueur + noms sous les cartes libres ===== */
+.bn.pc{position:relative;background:var(--tc);color:#140908;box-shadow:0 calc(6*var(--u)) 0 color-mix(in srgb,var(--tc) 60%,#000),0 calc(10*var(--u)) calc(28*var(--u)) #0008}
+.bn.pc.bot,.bn.pc.ex,.bn.pc.pt{background:var(--tc);color:#140908}
+.bn .bnn{position:absolute;top:calc(-12*var(--u));left:calc(14*var(--u));padding:calc(3*var(--u)) calc(10*var(--u));border-radius:calc(10*var(--u));background:#140908;color:var(--tc);font:700 calc(12*var(--u))/1 'Hanken Grotesk',sans-serif;letter-spacing:.02em;box-shadow:0 calc(2*var(--u)) calc(6*var(--u)) #0007}
+.card .onm{position:absolute;left:50%;bottom:calc(-11*var(--u));transform:translateX(-50%);background:var(--tc);color:#1a0f08;font:700 calc(10*var(--u))/1.25 'Hanken Grotesk',sans-serif;padding:0 calc(5*var(--u));border-radius:calc(7*var(--u));white-space:nowrap;max-width:calc(62*var(--u));overflow:hidden;text-overflow:ellipsis;z-index:4;box-shadow:0 calc(1*var(--u)) calc(3*var(--u)) #0007}
+
 /* ===== accueil allégé et réglages ===== */
 .hmore{display:flex;gap:calc(10*var(--u))}
 .hmore .btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:calc(2*var(--u));line-height:1.15;padding:calc(10*var(--u)) calc(8*var(--u));background:var(--panel2);color:var(--fg)}
@@ -1221,9 +1227,10 @@ function metaHTML(){
 function zoneHTML(z){
   const R=G.R,S=z==='S',arr=S?R.souk:R.medina;
   const cards=arr.map(x=>{
-    const c=cOf(z,x);
+    const c=cOf(z,x),who=S?c.own:x.owner;
+    const onm=(who!==null&&who!==undefined)?'<span class="onm own'+who+'">'+(who===0?'Toi':(G.tuto?'Louis':BOTS[G.cfg.level].n))+'</span>':'';
     const cls='zc'+(UI.hl.has(c.id)?' hl':'')+(UI.newId===c.id?' new':'')+(UI.pick?(UI.pick.ids.has(c.id)?' pickable':' dim'):'');
-    return `<div class="card s${c.s} ${cls}" data-cid="${c.id}">${cardInner(c)}${(S||x.owner==null)?'':'<span class="tok own'+x.owner+'"></span>'}</div>`;
+    return `<div class="card s${c.s} ${cls}" data-cid="${c.id}">${cardInner(c)}${(S||x.owner==null)?'':'<span class="tok own'+x.owner+'"></span>'}${onm}</div>`;
   }).join('');
   let ptiles='';
   if(S&&R.makla)for(const q of [0,1]){
@@ -2040,7 +2047,7 @@ const MAN_TABS=[
 <p><b>Score :</b> 5 jetons = un bâtonnet.</p>
 <p><b>Tour :</b> sélection · pose en zone neutre (tous, scellée) · glissement · Retournez ! · résolution.</p>
 <h3>Voir et comprendre les coups</h3>
-<p>Après « Retournez ! », un panneau montre en images l’<b>ordre de résolution</b> : les cartes alignées du premier au dernier, avec « = » quand deux valeurs sont égales et la pastille <b>D</b> sur le Donneur. Puis chaque coup est illustré : la carte jouée et sa zone, ce qu’elle <b>prend</b> (même valeur, puis <b>chaîne</b> en jaune), sa destination (pile avec le nombre de cartes, ou « hors jeu ») et les points gagnés. La carte qui joue est mise en avant sur le plateau, et à plusieurs chaque carte porte le <b>nom de son joueur</b>.</p>
+<p>Après « Retournez ! », un panneau montre en images l’<b>ordre de résolution</b> : les cartes alignées du premier au dernier, avec « = » quand deux valeurs sont égales et la pastille <b>D</b> sur le Donneur. Puis chaque coup est illustré : la carte jouée et sa zone, ce qu’elle <b>prend</b> (même valeur, puis <b>chaîne</b> en jaune), sa destination (pile avec le nombre de cartes, ou « hors jeu ») et les points gagnés. La carte qui joue est mise en avant sur le plateau, et chaque carte jouée porte le <b>nom de son joueur</b>, y compris les cartes libres laissées sur le plateau. Les annonces (Ronda, Tringa, Missa, cartes Baroud…) s’affichent <b>à la couleur du joueur</b> concerné, avec son nom.</p>
 <p>Dans <b>Réglages</b> (accueil) ou dans la pause, le menu <b>Rythme de résolution</b> propose <b>Rapide</b>, <b>Normal</b> et <b>Pas à pas</b> : en pas à pas, un appui sur « Suivant » fait passer au coup suivant. L’interrupteur <b>Commentaires des coups</b> (aussi disponible en petit sur le panneau lui-même) masque ce panneau (en pas à pas, seul le bouton « Suivant » reste).</p>
 <p><b>Apprendre en observant :</b> le <b>Mode auto</b> laisse l’IA jouer à ta place, avec le même niveau que les adversaires. Elle fait les mêmes gestes que toi : elle choisit sa carte, la pose en zone neutre, attend le « 3, 2, 1 », puis la glisse vers sa zone. Un petit interrupteur « Auto » flotte sous ton avatar pour l’activer ou le couper à tout moment (il n’existe pas dans les tutoriels) ; on peut aussi le régler dans <b>Réglages</b>. Il fonctionne avec tous les formats et tous les modules (Échanges, Dernière capture, Makla, Baroud et ses huit cartes), à deux, à trois, à quatre ou en équipes, et avance seul même en rythme « Pas à pas ».</p>
 <p>L’<b>Historique des coups</b> (pause et fin de manche) garde ces explications, dans l’ordre d’initiative, avec le <b>score final de chaque manche</b>.</p>`}
@@ -2342,6 +2349,38 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){const m=document.ge
     }catch(e){}
     return r;
   });
+})();
+
+/* =====================================================================
+   NOTIFICATIONS COLORÉES : chaque annonce (Ronda, Tringa, Missa, cartes Baroud, échanges…)
+   prend la couleur du joueur concerné et affiche son nom.
+   ===================================================================== */
+(function(){
+  const multi=typeof MODES!=='undefined';
+  const esc=s=>String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+  const col=p=>(typeof AD!=='undefined'&&AD.col)?AD.col(p):(typeof colOf==='function'?colOf(p):p);
+  const nm=p=>{
+    if(typeof AD!=='undefined'&&AD.name)return AD.name(p);
+    if(typeof seatName==='function')return seatName(p);
+    return p===0?'Toi':(typeof BOTS!=='undefined'?BOTS[G.cfg.level].n:'');
+  };
+  const _b=banner;
+  banner=function(txt,kd,ms){
+    let p=null;
+    if(multi){p=window.__bp;window.__bp=undefined;}
+    else p=kd==='bot'?1:(kd==='pt'||kd==='ex')?0:null;
+    const r=_b.apply(this,arguments);
+    try{
+      if(p!==null&&p!==undefined&&(kd==='pt'||kd==='bot'||kd==='ex')){
+        const el=document.querySelector('#banner .bn');
+        if(el&&!el.classList.contains('pc')){
+          el.classList.add('pc','own'+col(p));
+          el.insertAdjacentHTML('afterbegin','<span class="bnn">'+esc(nm(p))+'</span>');
+        }
+      }
+    }catch(e){}
+    return r;
+  };
 })();
 
 /* =====================================================================
