@@ -801,6 +801,17 @@ table.sum small{display:block;color:var(--mute);font-weight:400;font-size:calc(1
 .bn .bnn{position:absolute;top:calc(-12*var(--u));left:calc(14*var(--u));padding:calc(3*var(--u)) calc(10*var(--u));border-radius:calc(10*var(--u));background:#140908;color:var(--tc);font:700 calc(12*var(--u))/1 'Hanken Grotesk',sans-serif;letter-spacing:.02em;box-shadow:0 calc(2*var(--u)) calc(6*var(--u)) #0007}
 .card .onm{position:absolute;left:50%;bottom:calc(-11*var(--u));transform:translateX(-50%);background:var(--tc);color:#1a0f08;font:700 calc(10*var(--u))/1.25 'Hanken Grotesk',sans-serif;padding:0 calc(5*var(--u));border-radius:calc(7*var(--u));white-space:nowrap;max-width:calc(62*var(--u));overflow:hidden;text-overflow:ellipsis;z-index:4;box-shadow:0 calc(1*var(--u)) calc(3*var(--u)) #0007}
 
+/* ===== Bouclier (le voile) et jetons de couleur épuisés ===== */
+.card.veiled{outline:calc(3*var(--u)) dashed #F4B400;outline-offset:calc(2*var(--u))}
+.card.veiled::after{content:'';position:absolute;top:calc(-9*var(--u));right:calc(-9*var(--u));width:calc(20*var(--u));height:calc(23*var(--u));background:#F4B400;clip-path:polygon(0 0,100% 0,100% 55%,50% 100%,0 55%);filter:drop-shadow(0 calc(1*var(--u)) calc(2*var(--u)) #0008);z-index:6;pointer-events:none}
+.vcg{display:flex;flex-wrap:wrap;gap:calc(10*var(--u));justify-content:center;margin:calc(10*var(--u)) 0}
+.vc{display:flex;flex-direction:column;align-items:center;gap:calc(4*var(--u));padding:calc(8*var(--u)) calc(8*var(--u)) calc(6*var(--u));border:0;border-radius:calc(12*var(--u));background:var(--panel2);color:var(--fg);font:700 calc(11*var(--u)) 'Hanken Grotesk',sans-serif;cursor:pointer}
+#expl .xtok.no{background:none;border:calc(3*var(--u)) dashed #aaa;box-shadow:none}
+
+/* stock de jetons de couleur du joueur (versions simples) */
+.mestats .stash{display:inline-flex;align-items:center;gap:calc(4*var(--u));margin-left:calc(8*var(--u));font:700 calc(12*var(--u)) 'Hanken Grotesk',sans-serif;color:var(--mute)}
+.mestats .stash .cj{width:calc(13*var(--u));height:calc(13*var(--u));border-radius:50%;background:var(--tc);border:calc(2*var(--u)) solid #ffffff66;box-shadow:0 calc(1*var(--u)) calc(2*var(--u)) #000a;flex:none}
+
 /* ===== accueil allégé et réglages ===== */
 .hmore{display:flex;gap:calc(10*var(--u))}
 .hmore .btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:calc(2*var(--u));line-height:1.15;padding:calc(10*var(--u)) calc(8*var(--u));background:var(--panel2);color:var(--fg)}
@@ -952,14 +963,14 @@ const BOTS=[
   {n:'Hugo',l:'Difficile',a:'H'}
 ];
 const BARS={
-  Hâte:{ar:'8♣',m:0,d:'Tu résous en premier.'},
-  Patience:{ar:'8♥',m:0,d:'Tu résous en dernier.'},
+  Premier:{ar:'8♣',m:0,d:'Tu résous en premier.'},
+  Dernier:{ar:'8♥',m:0,d:'Tu résous en dernier.'},
   Encore:{ar:'9♣',m:1,d:'Deux cartes ce tour. +1 carte.'},
-  Présage:{ar:'9♥',m:0,d:'Vois 3 cartes écartées.'},
+  Indice:{ar:'9♥',m:0,d:'Vois 3 cartes écartées.'},
   Contre:{ar:'8♠',m:0,d:'Annule sa carte.'},
-  Rafle:{ar:'9♠',m:1,d:'Prends une carte libre.'},
-  Parole:{ar:'8♦',m:0,d:'Annonce une valeur, capture-la plus tard.'},
-  Vent:{ar:'9♦',m:1,d:'Une zone glisse vers l’autre.'}
+  Vol:{ar:'9♠',m:1,d:'Prends une carte libre.'},
+  Pari:{ar:'8♦',m:0,d:'Annonce une valeur, capture-la plus tard.'},
+  Bouclier:{ar:'9♦',m:0,d:'Protège une carte libre pour le tour.'}
 };
 const ABORT=Symbol('abort');
 const $=s=>document.querySelector(s);
@@ -1016,7 +1027,7 @@ function canEsc(p){
   return (R.hands[p].length-1+comp)+futR>=futT;
 }
 function calc(p,c,z){
-  const R=G.R,S=z==='S',arr=S?soukArr(p):R.medina;
+  const R=G.R,S=z==='S',arr=(S?soukArr(p):R.medina).filter(x=>!veilOn(cOf(z,x)));
   const eq=arr.filter(x=>cOf(z,x).v===c.v);
   const groups=[];let taken=[];
   if(eq.length){
@@ -1063,7 +1074,7 @@ async function applyRes(r){
     for(const g of r.groups){g.forEach(x=>UI.hl.add(cOf(r.z,x).id));render();await beat(430);}
   }
   if(r.kind==='free'){
-    r.c.own=p;if(S)R.souk.push(r.c);else R.medina.push({card:r.c,owner:p});
+    r.c.own=p;if(S)R.souk.push(r.c);else R.medina.push({card:r.c,owner:tokUse(p)<TOKMAX?p:null,by:p});
     UI.newId=r.c.id;done();render();await beat(420);UI.newId=null;return;
   }
   const idsAll=new Set(tkCards.map(c=>c.id));
@@ -1156,8 +1167,8 @@ function onBoard(card){
 }
 function freeTargets(){
   const R=G.R,t=[];
-  R.souk.forEach(c=>t.push({card:c,zone:'S',owner:c.own===undefined?null:c.own}));
-  R.medina.forEach(x=>t.push({card:x.card,zone:'M',owner:x.owner}));
+  R.souk.forEach(c=>{if(!veilOn(c))t.push({card:c,zone:'S',owner:c.own===undefined?null:c.own});});
+  R.medina.forEach(x=>{if(!veilOn(x.card))t.push({card:x.card,zone:'M',owner:x.owner});});
   return t;
 }
 function canAoud(p){
@@ -1171,7 +1182,7 @@ function canAoud(p){
 function pickTarget(T,only){
   return new Promise((res,rej)=>{
     UI.pick={ids:new Set(T.filter(t=>!only||t.card.code===only).map(t=>t.card.id)),res,list:T};
-    UI.pickMsg='Rafle : touche une carte libre.';
+    UI.pickMsg='Vol : touche une carte libre.';
     UI.rejectP=rej;render();
   });
 }
@@ -1188,7 +1199,7 @@ function botKhatfTarget(bi,T){
 }
 async function doKhatf(p,kt){
   const R=G.R,T=freeTargets();
-  if(!T.length){await banner('Rafle : rien à prendre','info',700);return;}
+  if(!T.length){await banner('Vol : rien à prendre','info',700);return;}
   let tgt=null;
   if(R.script&&kt)tgt=T.find(t=>t.card.code===kt)||null;
   if(!tgt&&p===0){
@@ -1196,7 +1207,7 @@ async function doKhatf(p,kt){
     UI.pick=null;UI.pickMsg='';
   }
   if(!tgt)tgt=botKhatfTarget(p,T)||T[0];
-  await banner('Rafle !',p?'bot':'ex',600);
+  await banner('Vol !',p?'bot':'ex',600);
   UI.hl=new Set([tgt.card.id]);render();await beat(380);
   const ids=new Set([tgt.card.id]);
   if(tgt.zone==='S'){
@@ -1208,42 +1219,61 @@ async function doKhatf(p,kt){
   UI.hl=new Set();render();UI.bump=null;
   noteCap(p,[tgt.card]);
 }
-function chooseZone(){
-  return new Promise((res,rej)=>{
-    openSheet('<h2>Vent</h2><div class="sub">Quelle zone souffle ?</div><div class="xbtns"><button class="btn" id="cz1">Souk</button><button class="btn" id="cz2">Médina</button></div>');
-    $('#cz1').onclick=()=>{UI.rejectX=null;closeSheet();res('S');};
-    $('#cz2').onclick=()=>{UI.rejectX=null;closeSheet();res('M');};
-    UI.rejectX=()=>rej(ABORT);
+/* Bouclier (le voile) : protège une carte libre du plateau jusqu’à la fin du tour ; rien ne bouge, aucun jeton n’est posé */
+function veilOn(c){const R=G.R;return !!(R&&R.veil&&R.veil.id===c.id);}
+function veilCls(c){return (veilOn(c)||(UI.phase==='select'&&UI.vt&&UI.vt.id===c.id))?' veiled':'';}
+function veilTargets(){
+  const R=G.R,t=[];
+  R.souk.forEach(c=>t.push({id:c.id,z:'S',card:c}));
+  R.medina.forEach(x=>t.push({id:x.card.id,z:'M',card:x.card}));
+  return t;
+}
+function botVeil(p){
+  const R=G.R,T=veilTargets();if(!T.length)return null;
+  const hand=R.hands[p];
+  // priorité : protéger une base de Ronda dont il tient la seconde carte
+  const own=T.filter(t=>t.z==='M'&&R.medina.some(x=>x.card.id===t.id&&x.owner===p)&&hand.some(h=>h.v===t.card.v));
+  if(own.length)return {id:own[0].id,z:own[0].z};
+  // sinon une carte du Souk dont il garde la valeur en main (pour la prendre au tour suivant)
+  const sk=T.filter(t=>t.z==='S'&&hand.some(h=>h.v===t.card.v));
+  if(sk.length&&Math.random()<.5)return {id:sk[0].id,z:'S'};
+  return null;
+}
+async function applyVeil(p,vt,fx){
+  const R=G.R,T=veilTargets();
+  let t=null;
+  if(vt&&typeof vt==='object')t=T.find(x=>x.id===vt.id)||null;
+  else if(typeof vt==='string')t=T.find(x=>x.card.code===vt)||null;
+  if(!t){await banner('Bouclier : rien à protéger','info',700);return;}
+  R.veil={id:t.id,z:t.z,by:p};
+  await banner('Bouclier !',fx,700);
+  UI.hl=new Set([t.id]);render();await beat(520);UI.hl=new Set();render();
+}
+function endVeil(){const R=G.R;if(R&&R.veil){R.veil=null;render();}}
+function pickVeil(){
+  const T=veilTargets();
+  const mk=t=>`<button class="vc" data-vi="${t.id}"><div class="card s${t.card.s}" style="--cw:46px;--ch:64px">${cardInner(t.card)}</div><small>${t.z==='S'?'Souk':'Médina'}</small></button>`;
+  openSheet('<h2>Bouclier</h2><div class="sub">Quelle carte protéger ?</div><div class="vcg">'+T.map(mk).join('')+'</div><button class="btn" id="vNo" style="width:100%;background:var(--panel2);color:var(--fg);margin-top:10px">Annuler</button>');
+  document.querySelectorAll('[data-vi]').forEach(b=>b.onclick=()=>{
+    const t=T.find(x=>String(x.id)===b.dataset.vi);if(!t)return;
+    UI.vt={id:t.id,z:t.z};closeSheet();render();
   });
+  $('#vNo').onclick=()=>{UI.bar=null;UI.vt=null;closeSheet();render();};
 }
-function botChergui(bi){
-  const R=G.R;
-  return R.medina.some(x=>x.owner===1-bi)?'M':'S';
-}
-async function doChergui(p,cz){
-  const R=G.R;let z;
-  if(R.script&&cz)z=cz;
-  else if(p===0)z=await chooseZone();
-  else z=botChergui(p);
-  await banner('Vent ! '+(z==='S'?'Souk → Médina':'Médina → Souk'),p?'bot':'ex',950);
-  if(z==='S'){
-    R.souk.splice(0).forEach(c=>R.medina.push({card:c,owner:c.own===undefined?null:c.own}));
-  }else{
-    R.medina.splice(0).forEach(x=>{x.card.own=x.owner;R.souk.push(x.card);});
-  }
-  render();await beat(500);
-}
+/* jetons de couleur : 6 par joueur ; sans jeton disponible, la carte libre reste sans jeton (pas de Ronda possible) */
+const TOKMAX=6;
+function tokUse(p){const R=G.R;return R.medina.filter(x=>x.owner===p).length+((R.garee&&R.garee[p])?R.garee[p].length:0);}
 function showFal(){
   const R=G.R,pool=shuffle(R.discard.slice()).slice(0,3);
   return new Promise((res,rej)=>{
-    openSheet('<h2>Présage</h2><div class="sub">Ta chance</div><div class="pgrid" style="justify-content:center">'+(pool.map(c=>cardHTML(c,'')).join('')||'<div class="sub">—</div>')+'</div><button class="btn pri" id="falOk" style="width:100%;background:var(--saf);color:#140908">Compris</button>');
+    openSheet('<h2>Indice</h2><div class="sub">Ta chance</div><div class="pgrid" style="justify-content:center">'+(pool.map(c=>cardHTML(c,'')).join('')||'<div class="sub">—</div>')+'</div><button class="btn pri" id="falOk" style="width:100%;background:var(--saf);color:#140908">Compris</button>');
     $('#falOk').onclick=()=>{UI.rejectX=null;closeSheet();res();};
     UI.rejectX=()=>rej(ABORT);
   });
 }
 
 async function resolveTurn(h,b){
-  const R=G.R,pk=[h,b];
+  const R=G.R,pk=[h,b];R.veil=null;
   const plays=[];
   pk.forEach((x,p)=>x.cards.forEach(c=>{
     R.hands[p]=R.hands[p].filter(y=>y.id!==c.card.id);
@@ -1291,20 +1321,21 @@ async function resolveTurn(h,b){
   }
   // effets immédiats
   for(const p of [0,1]){
-    if(live[p]==='Parole'){
+    if(live[p]==='Pari'){
       R.kelma[p]={v:pk[p].kv,turn:R.turn,held:false};
-      await banner('Parole ! « '+pk[p].kv+' »',p?'bot':'ex',1000);
+      await banner('Pari ! « '+pk[p].kv+' »',p?'bot':'ex',1000);
     }
-    if(live[p]==='Présage'){
-      if(p===0)await showFal();else await banner('Présage !','bot',600);
+    if(live[p]==='Indice'){
+      if(p===0)await showFal();else await banner('Indice !','bot',600);
     }
+    if(live[p]==='Bouclier')await applyVeil(p,pk[p].vt,p?'bot':'ex');
   }
   // initiative
   const last=R.turn===R.total;
   const prio=p=>Math.max(...plays.filter(x=>x.p===p).map(x=>x.card.v));
-  let zr=[0,1].find(p=>live[p]==='Hâte'),sb=[0,1].find(p=>live[p]==='Patience');
+  let zr=[0,1].find(p=>live[p]==='Premier'),sb=[0,1].find(p=>live[p]==='Dernier');
   if(zr!==undefined&&sb!==undefined&&zr!==sb){
-    await banner('Hâte × Patience','info',800);zr=sb=undefined;
+    await banner('Premier × Dernier','info',800);zr=sb=undefined;
   }
   let first;
   if(zr!==undefined)first=zr;
@@ -1333,14 +1364,12 @@ async function resolveTurn(h,b){
       if(r.kind==='free')fresh.push({p,card:m.card,zone:m.zone,play:m});
       lastKind[p]=r.kind;
     }
-    if(live[p]==='Rafle')await doKhatf(p,pk[p].kt);
+    if(live[p]==='Vol')await doKhatf(p,pk[p].kt);
     if(live[p]==='Encore'&&R.reserve.length){
       R.hands[p].push(R.reserve.pop());render();pop(p,'+1 carte');await beat(350);
     }
   }
-  for(const p of [first,1-first]){
-    if(live[p]==='Vent')await doChergui(p,pk[p].cz);
-  }
+  endVeil();
   R.curPlays=null;UI.reveal=null;UI.hl=new Set();render();
   if(last&&R.qaa&&lastKind[R.dealer]!=='free'){
     addPts(R.dealer,'qaa',2);
@@ -1390,30 +1419,30 @@ function botBaroud(bi,pick){
   if(!R.baroud||!R.bar[bi].length)return base;
   if(R.script){
     const e=R.script.bb[R.turn-1]||{};
-    return e.bar?{...base,bar:e.bar,kv:e.kv,kt:e.kt,cz:e.cz}:base;
+    return e.bar?{...base,bar:e.bar,kv:e.kv,kt:e.kt,vt:e.vt}:base;
   }
   const lvl=G.cfg.level,k=[.4,.65,.95][lvl],last=R.turn===R.total,sc=tot(bi);
   for(const n of shuffle(R.bar[bi].slice())){
     const m=BARS[n].m;if(sc<m)continue;
-    if(n==='Parole'&&!last&&R.turn<R.total-1){
+    if(n==='Pari'&&!last&&R.turn<R.total-1){
       let best=null,bc=0;
       for(const v of SEQ){
         const c=hand.filter(x=>x.v===v&&x.id!==pick.card.id).length+R.souk.filter(x=>x.v===v).length+R.medina.filter(x=>x.card.v===v).length;
         if(c>bc){bc=c;best=v;}
       }
-      if(best&&bc>=2&&Math.random()<.8*k+.1)return {...base,bar:'Parole',kv:best};
+      if(best&&bc>=2&&Math.random()<.8*k+.1)return {...base,bar:'Pari',kv:best};
     }
     if(n==='Contre'&&R.bar[1-bi].length&&Math.random()<.2*k)return {...base,bar:'Contre'};
-    if(n==='Hâte'){const r=calc(bi,pick.card,pick.zone);if(r.kind!=='free'&&Math.random()<.45*k)return {...base,bar:'Hâte'};}
-    if(n==='Patience'){const r=calc(bi,pick.card,pick.zone);if(r.kind==='free'&&Math.random()<.3*k)return {...base,bar:'Patience'};}
-    if(n==='Rafle'&&sc>=m+2&&freeTargets().length&&Math.random()<.5*k)return {...base,bar:'Rafle'};
+    if(n==='Premier'){const r=calc(bi,pick.card,pick.zone);if(r.kind!=='free'&&Math.random()<.45*k)return {...base,bar:'Premier'};}
+    if(n==='Dernier'){const r=calc(bi,pick.card,pick.zone);if(r.kind==='free'&&Math.random()<.3*k)return {...base,bar:'Dernier'};}
+    if(n==='Vol'&&sc>=m+2&&freeTargets().length&&Math.random()<.5*k)return {...base,bar:'Vol'};
     if(n==='Encore'&&sc>=m+1&&canAoud(bi)&&R.cap[bi]<5){
       let pair=null;
       for(const a of hand)for(const c of hand)if(!pair&&a.id<c.id&&a.v===c.v)pair=[a,c];
       if(pair&&Math.random()<.85*k)return {cards:[{card:pair[0],zone:'M'},{card:pair[1],zone:'M'}],bar:'Encore'};
     }
-    if(n==='Présage'&&Math.random()<.12*k)return {...base,bar:'Présage'};
-    if(n==='Vent'&&!last&&sc>=m+2&&R.medina.some(x=>x.owner===1-bi)&&Math.random()<.4*k)return {...base,bar:'Vent'};
+    if(n==='Indice'&&Math.random()<.12*k)return {...base,bar:'Indice'};
+    if(n==='Bouclier'&&!last&&Math.random()<.45*k){const vt=botVeil(bi);if(vt)return {...base,bar:'Bouclier',vt};}
   }
   return base;
 }
@@ -1438,7 +1467,7 @@ function waitHuman(){
 async function turn(){
   const R=G.R;FAST=false;
   if(R.refresh.includes(R.turn))await doRefresh();
-  UI.phase='select';UI.sel=null;UI.sel2=null;UI.bar=null;UI.kv=null;UI.pick=null;UI.pickMsg='';UI.picked=null;UI.oppReady=false;UI.reveal=null;
+  UI.phase='select';UI.sel=null;UI.sel2=null;UI.bar=null;UI.kv=null;UI.vt=null;UI.pick=null;UI.pickMsg='';UI.picked=null;UI.oppReady=false;UI.reveal=null;
   UI.allow=R.script?R.script.allow[R.turn-1]:null;
   const bot=botBaroud(1,botPick(1));UI.botPays={1:bot};
   const delay=R.script?500:600+Math.random()*1300;
@@ -1459,8 +1488,8 @@ async function runRound(){
   if(R.baroud){
     for(const p of [0,1]){
       const k=R.kelma[p];if(!k)continue;
-      if(k.held){addPts(p,'kelma',1);await banner('Parole tenue ! +1',p?'bot':'pt',900);}
-      else{addPts(1-p,'kelma',2);await banner('Parole rompue ! +2',p?'pt':'bot',900);}
+      if(k.held){addPts(p,'kelma',1);await banner('Pari tenu ! +1',p?'bot':'pt',900);}
+      else{addPts(1-p,'kelma',2);await banner('Pari perdu ! +2',p?'pt':'bot',900);}
     }
   }
   const a=R.pile[0].length,b=R.pile[1].length;
@@ -1513,7 +1542,7 @@ function tableRows(){
   rows.push(['Annonces','ann'],['Missa','missa']);
   if(R.exch)rows.push(['Échanges','exch']);
   if(R.qaa)rows.push(['Dernière capture','qaa']);
-  if(R.baroud)rows.push(['Mèches','meche'],['Parole','kelma']);
+  if(R.baroud)rows.push(['Mèches','meche'],['Pari','kelma']);
   if(R.moul)rows.push(['Moul Souk','moul']);
   if(R.baroud)rows.push(['Poudrière','pot']);
   return rows.map(([l,k])=>({l,k,a:s[0][k],b:s[1][k]}));
@@ -1594,18 +1623,19 @@ const LESSONS=[
     {msg:'La chaîne 3 → 4 emporte sa pile.',me:['3E','S'],bot:['12B','M']},
     {msg:'Vide le Souk : Missa !',me:['2E','S'],bot:['5B','M']}]},
   {name:'Baroud 1',total:4,dealer:1,exch:false,qaa:false,moul:0,baroud:true,
-   rig:{me:['5B','3D','4E','6B'],bot:['12C','7B','2B','11E'],souk:['3C','6E'],bar:[['Parole','Rafle'],['Patience','Présage']]},
+   rig:{me:['5B','3D','4E','6B'],bot:['12C','7B','2B','11E'],souk:['3C','6E'],bar:[['Pari','Vol'],['Dernier','Indice']]},
    steps:[
-    {msg:'Glisse Parole sous ton 5 : annonce 3.',me:['5B','M'],bot:['12C','S'],mb:{bar:'Parole',kv:3}},
+    {msg:'Glisse Pari sous ton 5 : annonce 3.',me:['5B','M'],bot:['12C','S'],mb:{bar:'Pari',kv:3}},
     {msg:'Capture un 3 : parole tenue.',me:['3D','S'],bot:['7B','M']},
-    {msg:'Rafle (1 jeton) : prends son Roi.',me:['4E','M'],bot:['2B','M'],mb:{bar:'Rafle',kt:'12C'}},
+    {msg:'Vol (1 jeton) : prends son Roi.',me:['4E','M'],bot:['2B','M'],mb:{bar:'Vol',kt:'12C'}},
     {msg:'Vide le Souk : Missa !',me:['6B','S'],bot:['11E','M']}]},
-  {name:'Baroud 2',total:3,dealer:1,exch:false,qaa:false,moul:0,baroud:true,
-   rig:{me:['6B','7B','7C','2E'],bot:['6E','4D','5E','1E'],souk:['6C','2D'],reserve:['1D','3E'],bar:[['Contre','Encore'],['Hâte','Vent']]},
+  {name:'Baroud 2',total:4,dealer:1,exch:false,qaa:false,moul:0,baroud:true,
+   rig:{me:['6B','7B','7C','2E'],bot:['6E','4D','5E','1E'],souk:['6C','2D'],reserve:['1D','3E'],bar:[['Contre','Encore'],['Premier','Bouclier']]},
    steps:[
-    {msg:'Il joue Hâte : réponds Contre.',me:['6B','S'],bot:['6E','S'],mb:{bar:'Contre'},bb:{bar:'Hâte'}},
+    {msg:'Il joue Premier : réponds Contre.',me:['6B','S'],bot:['6E','S'],mb:{bar:'Contre'},bb:{bar:'Premier'}},
     {msg:'Encore : deux 7 en Médina.',me:['7B','M'],bot:['4D','S'],mb:{bar:'Encore',c2:'7C',z2:'M'}},
-    {msg:'Ramasse le 2. Il joue Vent.',me:['2E','S'],bot:['5E','S'],bb:{bar:'Vent',cz:'S'}}]}
+    {msg:'Il protège le 2 : tu ne peux pas le ramasser.',me:['2E','S'],bot:['5E','S'],bb:{bar:'Bouclier',vt:'2D'}},
+    {msg:'Le voile est tombé : le 2 est de nouveau libre.',me:['3E','S'],bot:['1E','S']}]}
 ];
 function startLesson(i){
   G.tok++;
@@ -1680,9 +1710,9 @@ function metaHTML(){
 function zoneHTML(z){
   const R=G.R,S=z==='S',arr=S?R.souk:R.medina;
   const cards=arr.map(x=>{
-    const c=cOf(z,x),who=S?c.own:x.owner;
+    const c=cOf(z,x),who=S?c.own:(x.owner!=null?x.owner:x.by);
     const onm=(who!==null&&who!==undefined)?'<span class="onm own'+who+'">'+(who===0?'Toi':(G.tuto?'Louis':BOTS[G.cfg.level].n))+'</span>':'';
-    const cls='zc'+(UI.hl.has(c.id)?' hl':'')+(UI.newId===c.id?' new':'')+(UI.pick?(UI.pick.ids.has(c.id)?' pickable':' dim'):'');
+    const cls='zc'+veilCls(c)+(UI.hl.has(c.id)?' hl':'')+(UI.newId===c.id?' new':'')+(UI.pick?(UI.pick.ids.has(c.id)?' pickable':' dim'):'');
     return `<div class="card s${c.s} ${cls}" data-cid="${c.id}">${cardInner(c)}${(S||x.owner==null)?'':'<span class="tok own'+x.owner+'"></span>'}${onm}</div>`;
   }).join('');
   let ptiles='';
@@ -1727,7 +1757,7 @@ function zoneHTML(z){
     <div class="slots"><div class="slot opp">${opp}</div><div class="${mineCls}">${mine}</div></div></div>`;
 }
 function readySel(){
-  return !!(UI.sel&&(UI.bar!=='Encore'||UI.sel2)&&(UI.bar!=='Parole'||UI.kv));
+  return !!(UI.sel&&(UI.bar!=='Encore'||UI.sel2)&&(UI.bar!=='Pari'||UI.kv)&&(UI.bar!=='Bouclier'||UI.vt));
 }
 function trayHTML(){
   const R=G.R;
@@ -1735,9 +1765,9 @@ function trayHTML(){
   const last=R.turn===R.total,A=UI.allow;
   return '<div class="btray">'+R.bar[0].map(n=>{
     const B=BARS[n];
-    const dis=tot(0)<B.m||(last&&(n==='Parole'||n==='Vent'))||(n==='Encore'&&!canAoud(0))||!!(A&&A.bar!==n);
+    const dis=tot(0)<B.m||(last&&(n==='Pari'||n==='Bouclier'))||(n==='Bouclier'&&!veilTargets().length)||(n==='Encore'&&!canAoud(0))||!!(A&&A.bar!==n);
     const on=UI.bar===n;
-    return `<button class="bcard${on?' on':''}${dis?' dis':''}${(A&&A.bar===n&&!on)?' hint':''}" data-b="${n}"><b>${B.ar}</b><small>${n}${on&&n==='Parole'&&UI.kv?' · '+UI.kv:''}</small><i>${'●'.repeat(B.m)}</i></button>`;
+    return `<button class="bcard${on?' on':''}${dis?' dis':''}${(A&&A.bar===n&&!on)?' hint':''}" data-b="${n}"><b>${B.ar}</b><small>${n}${on&&n==='Pari'&&UI.kv?' · '+UI.kv:''}</small><i>${'●'.repeat(B.m)}</i></button>`;
   }).join('')+'<button class="binfo" id="binfo" aria-label="Cartes Baroud">?</button></div>';
 }
 function meHTML(){
@@ -1751,7 +1781,7 @@ function meHTML(){
   const ok=UI.phase==='select'&&readySel();
   const wHint=A&&ok?' hint':'';
   return `<div class="mestats"><div class="av me" style="width:36px;height:36px;font-size:18px">T${R.dealer===0?'<span class="dbadge">D</span>':''}</div>
-    <div class="who"><b>Toi</b><div class="stat">${statHTML(0)}</div></div><div class="score" data-score="0">${tot(0)}</div></div>
+    <div class="who"><b>Toi</b><div class="stat">${statHTML(0)}<span class="stash own0" title="Jetons de couleur disponibles (6 au total)"><i class="cj"></i>${Math.max(0,TOKMAX-tokUse(0))}</span></div></div><div class="score" data-score="0">${tot(0)}</div></div>
     ${trayHTML()}
     <div class="hand" id="hand">${hh}</div>
     <button class="wach${wHint}" id="wach" ${ok?'':'disabled'}>Retournez !</button>`;
@@ -1872,24 +1902,26 @@ function tryPlace(cid,zone){
 function toggleBar(n){
   if(UI.phase!=='select')return;
   const R=G.R,B=BARS[n],A=UI.allow,last=R.turn===R.total;
-  const dis=tot(0)<B.m||(last&&(n==='Parole'||n==='Vent'))||(n==='Encore'&&!canAoud(0))||!!(A&&A.bar!==n);
+  const dis=tot(0)<B.m||(last&&(n==='Pari'||n==='Bouclier'))||(n==='Bouclier'&&!veilTargets().length)||(n==='Encore'&&!canAoud(0))||!!(A&&A.bar!==n);
   if(dis){nudge();return;}
   if(UI.bar===n){
-    if(n==='Parole'){pickValue();return;}
-    UI.bar=null;UI.kv=null;UI.sel2=null;render();return;
+    if(n==='Pari'){pickValue();return;}
+    if(n==='Bouclier'){pickVeil();return;}
+    UI.bar=null;UI.kv=null;UI.vt=null;UI.sel2=null;render();return;
   }
-  UI.bar=n;UI.kv=null;UI.sel2=null;render();
-  if(n==='Parole')pickValue();
+  UI.bar=n;UI.kv=null;UI.vt=null;UI.sel2=null;render();
+  if(n==='Pari')pickValue();
+  if(n==='Bouclier')pickVeil();
 }
 function pickValue(){
   const A=UI.allow;
-  openSheet('<h2>Parole</h2><div class="sub">Quelle valeur ?</div><div class="vgrid">'+SEQ.map(v=>`<button class="vb" data-v="${v}">${v}</button>`).join('')+'</div><button class="btn" id="vNo" style="width:100%;background:var(--panel2);color:var(--fg)">Retirer</button>');
+  openSheet('<h2>Pari</h2><div class="sub">Quelle valeur ?</div><div class="vgrid">'+SEQ.map(v=>`<button class="vb" data-v="${v}">${v}</button>`).join('')+'</div><button class="btn" id="vNo" style="width:100%;background:var(--panel2);color:var(--fg)">Retirer</button>');
   document.querySelectorAll('.vb').forEach(b=>b.onclick=()=>{
     const v=+b.dataset.v;
     if(A&&A.kv&&v!==A.kv){nudge();return;}
     UI.kv=v;closeSheet();render();
   });
-  $('#vNo').onclick=()=>{UI.bar=null;UI.kv=null;closeSheet();render();};
+  $('#vNo').onclick=()=>{UI.bar=null;UI.kv=null;UI.vt=null;closeSheet();render();};
 }
 function galleryHTML(){
   return '<h2>Cartes Baroud</h2><div class="gal">'+Object.keys(BARS).map(n=>{
@@ -1966,7 +1998,7 @@ $('#me').addEventListener('click',e=>{
     const A=UI.allow;
     const cards=[{card:UI.sel.card,zone:UI.sel.zone}];
     if(UI.bar==='Encore')cards.push({card:UI.sel2.card,zone:UI.sel2.zone});
-    const pay={cards,bar:UI.bar,kv:UI.kv,kt:A&&A.kt,cz:A&&A.cz};
+    const pay={cards,bar:UI.bar,kv:UI.kv,vt:UI.vt,kt:A&&A.kt};
     UI.phase='busy';UI.resolveSel&&UI.resolveSel(pay);UI.resolveSel=null;
   }
 });
@@ -2031,8 +2063,7 @@ function Tgauge(p,mini){
   return mini?`<span class="mini" aria-label="Plafond Médina ${c} sur 6">${g}</span>`:`<span class="gauge" aria-label="Plafond Médina ${c} sur 6"><svg class="ico"><use href="#ic-dome"/></svg>${g}</span>`;
 }
 function Tstash(p){
-  const R=G.R,used=R.medina.filter(x=>x.owner===p).length+R.garee[p].length;
-  return Math.max(0,14-used);
+  return Math.max(0,TOKMAX-tokUse(p));   /* 6 jetons de couleur par joueur */
 }
 function Ttray(e,big){
   const s=AD.score(e),b=Math.floor(s/5),j=s%5;
@@ -2089,9 +2120,9 @@ function topHTML(){
 function zoneHTML(z){
   const R=G.R,S=z==='S',arr=S?R.souk:R.medina,N=AD.N();
   const cards=arr.map(x=>{
-    const c=cOf(z,x),own=S?null:x.owner,who=S?c.own:x.owner;
+    const c=cOf(z,x),own=S?null:x.owner,who=S?c.own:(x.owner!=null?x.owner:x.by);
     const onm=(N>2&&who!==null&&who!==undefined)?'<span class="onm own'+AD.col(who)+'">'+AD.name(who)+'</span>':'';
-    const cls='zc'+(UI.hl.has(c.id)?' hl':'')+(UI.newId===c.id?' new':'')+(UI.pick?(UI.pick.ids.has(c.id)?' pickable':' dim'):'');
+    const cls='zc'+veilCls(c)+(UI.hl.has(c.id)?' hl':'')+(UI.newId===c.id?' new':'')+(UI.pick?(UI.pick.ids.has(c.id)?' pickable':' dim'):'');
     return `<div class="card s${c.s} ${cls}" data-cid="${c.id}" style="--r:${Tr(c.id)}deg">${cardInner(c)}${(S||own===null||own===undefined)?'':'<span class="tok own'+AD.col(own)+'"></span>'}${onm}</div>`;
   }).join('');
   let corner='';
@@ -2122,7 +2153,7 @@ function zoneHTML(z){
 }
 function TbarDis(n){
   const R=G.R,A=UI.allow,last=R.turn===R.total,c=AD.mech(n);
-  return UI.stage!=='pick'||(c>0&&AD.me()<c)||(last&&(n==='Parole'||n==='Vent'))||(n==='Encore'&&!canAoud(0))||!!(A&&A.bar!==n);
+  return UI.stage!=='pick'||(c>0&&AD.me()<c)||(last&&(n==='Pari'||n==='Bouclier'))||(n==='Bouclier'&&!veilTargets().length)||(n==='Encore'&&!canAoud(0))||!!(A&&A.bar!==n);
 }
 function trayHTML(){
   const R=G.R;
@@ -2130,18 +2161,20 @@ function trayHTML(){
   const A=UI.allow;
   return '<div class="btray">'+R.bar[0].map(n=>{
     const dis=TbarDis(n),on=UI.bar===n,f=BF[n],c=AD.mech(n);
-    return `<button class="bcard${on?' on':''}${dis?' dis':''}${(A&&A.bar===n&&!on&&UI.stage==='pick')?' hint':''}" data-b="${n}"><span class="bk s${f[1]}"><b>${f[0]}</b><svg viewBox="0 0 24 24"><use href="#fs-${f[1]}"/></svg></span><span class="bt"><b>${n}</b><small>${on&&n==='Parole'&&UI.kv?'valeur '+UI.kv:''}</small></span><i>${'●'.repeat(c)}</i></button>`;
+    return `<button class="bcard${on?' on':''}${dis?' dis':''}${(A&&A.bar===n&&!on&&UI.stage==='pick')?' hint':''}" data-b="${n}"><span class="bk s${f[1]}"><b>${f[0]}</b><svg viewBox="0 0 24 24"><use href="#fs-${f[1]}"/></svg></span><span class="bt"><b>${n}</b><small>${on&&n==='Pari'&&UI.kv?'valeur '+UI.kv:''}</small></span><i>${'●'.repeat(c)}</i></button>`;
   }).join('')+'<button class="binfo" id="binfo" aria-label="Cartes Baroud">?</button></div>';
 }
 toggleBar=function(n){
   if(UI.phase!=='select')return;
   if(TbarDis(n)){nudge();return;}
   if(UI.bar===n){
-    if(n==='Parole'){pickValue();return;}
-    UI.bar=null;UI.kv=null;UI.sel2=null;render();return;
+    if(n==='Pari'){pickValue();return;}
+    if(n==='Bouclier'){pickVeil();return;}
+    UI.bar=null;UI.kv=null;UI.vt=null;UI.sel2=null;render();return;
   }
-  UI.bar=n;UI.kv=null;UI.sel2=null;render();
-  if(n==='Parole')pickValue();
+  UI.bar=n;UI.kv=null;UI.vt=null;UI.sel2=null;render();
+  if(n==='Pari')pickValue();
+  if(n==='Bouclier')pickVeil();
 };
 function meHTML(){
   const R=G.R,pick=UI.stage==='pick';
@@ -2161,7 +2194,7 @@ function meHTML(){
   return `<div class="mestats"><div class="av me">${AD.av(0)}${pr?'<span class="pr" title="Priorité à égalité">'+pr+'</span>':''}</div>
     <div class="who"><b>Toi ${R.dealer===0?'<span class="dtok" title="Donneur"></span>':''}${R.teams?'<em class="tag tip" tabindex="0" title="équipe avec '+AD.name(2)+'" data-tip="équipe avec '+AD.name(2)+'">é</em>':''}</b><div class="stat">${Tgauge(0,false)}</div></div>
     ${R.teams?'':'<span class="v5">'+Ttray(e,true)+'</span>'}
-    <span class="stash own${AD.col(0)} v5"><i class="cj"></i>${Tstash(0)}</span></div>
+    <span class="stash own${AD.col(0)} v5" title="Jetons de couleur disponibles (6 au total)" aria-label="Jetons de couleur disponibles : ${Tstash(0)} sur 6"><i class="cj"></i>${Tstash(0)}</span></div>
     ${trayHTML()}
     <div class="hand v2" id="hand">${hh}</div>
     <button class="wach${A&&ok?' hint':''}${pick?'':' wide'}" id="poser" ${ok?'':'disabled'}>${lab}</button>`;
@@ -2406,7 +2439,7 @@ renderHome=function(){
 /* =====================================================================
    BAROUD : jeu français (les cartes d’action sont les 8 et les 9)
    ===================================================================== */
-const BF={Hâte:['8','B'],Patience:['8','C'],Encore:['9','B'],Présage:['9','C'],Contre:['8','E'],Rafle:['9','E'],Parole:['8','D'],Vent:['9','D']};
+const BF={Premier:['8','B'],Dernier:['8','C'],Encore:['9','B'],Indice:['9','C'],Contre:['8','E'],Vol:['9','E'],Pari:['8','D'],Bouclier:['9','D']};
 function Tface(v){return FRK[v]||v;}
 openGallery=function(){
   openSheet('<h2>Cartes Baroud</h2><div class="sub">Les 8 et les 9 du jeu français.</div><div class="gal">'+Object.keys(BARS).map(n=>{
@@ -2558,9 +2591,9 @@ $('#game').addEventListener('click',e=>{
 readySel=function(){
   const A=UI.allow;
   if(A&&A.bar&&UI.bar!==A.bar)return false;
-  if(A&&A.bar==='Parole'&&A.kv&&UI.kv!==A.kv)return false;
+  if(A&&A.bar==='Pari'&&A.kv&&UI.kv!==A.kv)return false;
   if(A&&A.c2&&!UI.sel2)return false;
-  return !!(UI.sel&&(UI.bar!=='Encore'||UI.sel2)&&(UI.bar!=='Parole'||UI.kv));
+  return !!(UI.sel&&(UI.bar!=='Encore'||UI.sel2)&&(UI.bar!=='Pari'||UI.kv));
 };
 
 /* notifications : le texte s'adapte à la largeur de sa pastille */
@@ -2591,9 +2624,9 @@ function TneutralDuel(){
 function TzoneDuel(z){
   const R=G.R,S=z==='S',arr=S?R.souk:R.medina;
   const cards=arr.map(x=>{
-    const c=cOf(z,x),own=S?null:x.owner,who=S?c.own:x.owner;
+    const c=cOf(z,x),own=S?null:x.owner,who=S?c.own:(x.owner!=null?x.owner:x.by);
     const onm=(who!==null&&who!==undefined)?'<span class="onm own'+AD.col(who)+'">'+AD.name(who)+'</span>':'';
-    const cls='zc'+(UI.hl.has(c.id)?' hl':'')+(UI.newId===c.id?' new':'')+(UI.pick?(UI.pick.ids.has(c.id)?' pickable':' dim'):'');
+    const cls='zc'+veilCls(c)+(UI.hl.has(c.id)?' hl':'')+(UI.newId===c.id?' new':'')+(UI.pick?(UI.pick.ids.has(c.id)?' pickable':' dim'):'');
     return `<div class="card s${c.s} ${cls}" data-cid="${c.id}" style="--r:${Tr(c.id)}deg">${cardInner(c)}${(S||own===null||own===undefined)?'':'<span class="tok own'+AD.col(own)+'"></span>'}${onm}</div>`;
   }).join('');
   let top='',bot='';
@@ -2651,9 +2684,9 @@ function Tqp(c,z,seat){
   }
   return c.qp;
 }
-function TfreeCard(c,z,own){
-  const who=z==='S'?c.own:own,onm=(who!==null&&who!==undefined)?'<span class="onm own'+AD.col(who)+'">'+AD.name(who)+'</span>':'';
-  const cls='zc'+(UI.hl.has(c.id)?' hl':'')+(UI.newId===c.id?' new':'')+(UI.pick?(UI.pick.ids.has(c.id)?' pickable':' dim'):'');
+function TfreeCard(c,z,own,by){
+  const who=z==='S'?c.own:(own!==null&&own!==undefined?own:by),onm=(who!==null&&who!==undefined)?'<span class="onm own'+AD.col(who)+'">'+AD.name(who)+'</span>':'';
+  const cls='zc'+veilCls(c)+(UI.hl.has(c.id)?' hl':'')+(UI.newId===c.id?' new':'')+(UI.pick?(UI.pick.ids.has(c.id)?' pickable':' dim'):'');
   return `<div class="card s${c.s} ${cls}" data-cid="${c.id}" style="--r:${Tr(c.id)}deg">${cardInner(c)}${(z==='S'||own===null||own===undefined)?'':'<span class="tok own'+AD.col(own)+'"></span>'}${onm}</div>`;
 }
 function TflipHTML(pl,rv){
@@ -2693,7 +2726,7 @@ function Tquad(){
   const R=G.R,rv=UI.reveal;
   const cards={TL:[],TR:[],BL:[],BR:[]},rsm={TL:{},TR:{},BL:{},BR:{}};
   R.souk.forEach(c=>{const q=Tqp(c,'S',c.own);cards[q].push(TfreeCard(c,'S',null));});
-  R.medina.forEach(x=>{const q=Tqp(x.card,'M',x.owner);cards[q].push(TfreeCard(x.card,'M',x.owner));});
+  R.medina.forEach(x=>{const q=Tqp(x.card,'M',x.owner!=null?x.owner:x.by);cards[q].push(TfreeCard(x.card,'M',x.owner,x.by));});
   if(rv){
     const seen={};
     rv.plays.forEach(pl=>{
@@ -2751,7 +2784,7 @@ function Hn(p){
 function HEn(e){return (typeof entName==='function')?entName(e):Hn(e);}
 function Hcard(c){return (HFV[c.v]||c.v)+HFR[c.s];}
 const HZ={S:'Souk',M:'Médina'};
-const HK={ann:'annonce',missa:'Missa',exch:'échange',qaa:'Dernière capture',moul:'Moul Souk',meche:'mèche',kelma:'Parole',pot:'Poudrière'};
+const HK={ann:'annonce',missa:'Missa',exch:'échange',qaa:'Dernière capture',moul:'Moul Souk',meche:'mèche',kelma:'Pari',pot:'Poudrière'};
 function Hround(){return G.match?G.match.round:0;}
 function Hesc(s){return String(s).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));}
 function HLpts(e,k,g){
@@ -2775,15 +2808,15 @@ applyRes=async function(r){
     if(!e.ord&&UI.reveal&&UI.reveal.order){
       const o=UI.reveal.order,ps=Object.keys(o).map(Number).sort((x,y)=>o[x]-o[y]);
       e.ord=ps;e.rk=o;e.eff={};
-      ps.forEach(p=>{const b=UI.reveal.bars&&UI.reveal.bars[p];e.eff[p]=(b&&!b.x&&(b.name==='Hâte'||b.name==='Patience'))?b.name:null;});
+      ps.forEach(p=>{const b=UI.reveal.bars&&UI.reveal.bars[p];e.eff[p]=(b&&!b.x&&(b.name==='Premier'||b.name==='Dernier'))?b.name:null;});
     }
     rec={p:r.p,t:Hcard(r.c),z:r.z,kind:r.kind,missa:!!r.missa,second:e.res.some(x=>x.p===r.p),
       taken:r.taken.map(x=>Hdesc(r,x)),groups:r.groups.map(g=>g.map(x=>Hdesc(r,x))),pts:[],rk:e.rk?e.rk[r.p]:0};
     e.res.push(rec);HL.step=rec;
   }
-  try{return await _Hap2(r);}finally{HL.step=null;}
+  try{const out=await _Hap2(r);if(rec&&rec.kind==='free'&&rec.z==='M'){const x=G.R.medina.find(y=>y.card.id===r.c.id);rec.noTok=!!(x&&x.owner==null);}return out;}finally{HL.step=null;}
 };
-const HSKIP=/^((Hâte|Patience|Encore|Présage|Contre|Rafle|Parole|Vent) !$)|^(Retournez|Refresh|Le Donneur distribue|Tu donnes|.+ donne$|Ronda|Tringa|Missa|Dernière capture|Moul Souk|Parole tenue|Parole rompue|Poudrière|Baroud)/;
+const HSKIP=/^((Premier|Dernier|Encore|Indice|Contre|Vol|Pari|Bouclier) !$)|^(Retournez|Refresh|Le Donneur distribue|Tu donnes|.+ donne$|Ronda|Tringa|Missa|Dernière capture|Moul Souk|Pari tenu|Pari perdu|Poudrière|Baroud)/;
 const _Hbn=banner;
 banner=function(txt,kd,ms){
   try{
@@ -2836,8 +2869,8 @@ if(typeof startLesson==='function'){
 function Hv(v){return HFV[v]||v;}
 function Hwhy(e,i){
   const p=e.ord[i],f=e.eff[p],v=e.val[p];
-  if(f==='Hâte')return 'Hâte : il passe en premier';
-  if(f==='Patience')return 'Patience : il passe en dernier';
+  if(f==='Premier')return 'Premier : il passe en premier';
+  if(f==='Dernier')return 'Dernier : il passe en dernier';
   if(e.last&&p===e.dealer)return 'dernier tour : le Donneur passe toujours en dernier';
   if(i===0)return 'valeur la plus haute ('+Hv(v)+')';
   const q=e.ord[i-1];
@@ -2847,7 +2880,7 @@ function Hwhy(e,i){
 function Hpile(p){const tm=typeof G!=='undefined'&&G.R&&G.R.teams;return p===0?(tm?'notre pile':'ta pile'):'la pile de '+Hesc(Hpl(p));}
 function Hexp(r){
   const z=HZ[r.z],who=Hpile(r.p);
-  if(r.kind==='free')return r.z==='M'?`${Hesc(r.t)} reste libre en Médina (avec ${r.p===0?'ton jeton':'le jeton de '+Hesc(Hn(r.p))}) : aucune carte de même valeur à prendre.`:`${Hesc(r.t)} reste libre au Souk : aucune carte de même valeur à prendre.`;
+  if(r.kind==='free')return r.z==='M'?`${Hesc(r.t)} reste libre en Médina ${r.noTok?'(sans jeton : jetons de couleur épuisés, pas de Ronda possible)':'(avec '+(r.p===0?'ton jeton':'le jeton de '+Hesc(Hn(r.p)))+')'} : aucune carte de même valeur à prendre.`:`${Hesc(r.t)} reste libre au Souk : aucune carte de même valeur à prendre.`;
   if(r.kind==='ronda')return `${Hesc(r.t)} rejoint sa carte libre de même valeur : Ronda +2, la paire est mise de côté.`;
   if(r.kind==='tringa')return `${Hesc(r.t)} est la 3ᵉ carte de même valeur : Tringa +3, le trio rejoint ${who}.`;
   const g=r.groups||[];let t=`${Hesc(r.t)} capture ${g[0]?Hesc(g[0].join(' + ')):'—'} (même valeur)`;
@@ -2974,10 +3007,10 @@ openSheet=function(html,mid){
     const val={};ps.forEach(p=>{val[p]=Math.max(...rv.plays.filter(x=>x.p===p).map(x=>x.card.v));});
     let h='';
     ps.forEach((p,i)=>{
-      if(i){const q=ps[i-1],b=rv.bars&&rv.bars[q],b2=rv.bars&&rv.bars[p],hasEff=(b&&!b.x&&(b.name==='Hâte'||b.name==='Patience'))||(b2&&!b2.x&&(b2.name==='Hâte'||b2.name==='Patience'));
+      if(i){const q=ps[i-1],b=rv.bars&&rv.bars[q],b2=rv.bars&&rv.bars[p],hasEff=(b&&!b.x&&(b.name==='Premier'||b.name==='Dernier'))||(b2&&!b2.x&&(b2.name==='Premier'||b2.name==='Dernier'));
         h+=(!hasEff&&val[q]===val[p])?'<span class="xeq">=</span>':'<span class="xgt">›</span>';}
       const cs=rv.plays.filter(x=>x.p===p).map(x=>mini(x.card,'',big?i*110:0)).join('');
-      const bar=rv.bars&&rv.bars[p],ef=(bar&&!bar.x&&(bar.name==='Hâte'||bar.name==='Patience'))?'<u class="xf">'+bar.name+'</u>':'';
+      const bar=rv.bars&&rv.bars[p],ef=(bar&&!bar.x&&(bar.name==='Premier'||bar.name==='Dernier'))?'<u class="xf">'+bar.name+'</u>':'';
       h+='<span class="xo1 own'+col(p)+(now===p?' cur':'')+(done.has(p)?' done':'')+'"><b class="xrk">'+rv.order[p]+'</b>'+(G.R.dealer===p?'<u class="xd">D</u>':'')+cs+'<em>'+Hesc(Hn(p))+'</em>'+ef+'</span>';
     });
     return h;
@@ -2988,7 +3021,8 @@ openSheet=function(html,mid){
   function resultHTML(r){
     const g=r.groups||[];let h='';
     if(r.kind==='free'){
-      h=mini(r.c,'stay',0)+(r.z==='M'?'<span class="xtok own'+col(r.p)+'"></span>':'')+'<span class="xl">libre</span>';
+      const noT=r.z==='M'&&typeof tokUse==='function'&&tokUse(r.p)>=TOKMAX;
+      h=mini(r.c,'stay',0)+(r.z==='M'?(noT?'<span class="xtok no"></span>':'<span class="xtok own'+col(r.p)+'"></span>'):'')+'<span class="xl">'+(noT?'libre · sans jeton':'libre')+'</span>';
     }else if(r.kind==='ronda'){
       h=mini(r.own.card,'',0)+eq+mini(r.c,'',120)+'<span class="xl">Ronda</span>';
     }else if(r.kind==='tringa'){
@@ -3059,14 +3093,14 @@ const MAN_TABS=[
 <ul><li><b>40 cartes du jeu français</b> : As, 2 à 7, Valet, Dame, Roi. On retire les 8, 9 et 10 : ils restent écartés, sauf en Baroud où les 8 et les 9 deviennent les cartes d’action.</li>
 <li>Un plateau : Souk, Médina, coin Ronda, zone neutre.</li>
 <li>Jetons de 1 point (pois chiches) et <b>bâtonnets</b> qui valent 5 points.</li>
-<li>14 jetons de couleur par joueur, un jeton Moul Souk (+3, +4 ou +5), un jeton de Donneur, un sablier de 15 s (facultatif).</li></ul>
+<li><b>6 jetons de couleur par joueur</b> (pour les cartes libres de la Médina), un jeton Moul Souk (+3, +4 ou +5), un jeton de Donneur, un sablier de 15 s (facultatif).</li></ul>
 <h3>Mise en place</h3>
 <ol><li><b>Le Donneur.</b> Chacun coupe le paquet : la carte la plus haute désigne le Donneur. Égalité : on recommence.</li>
 <li><b>La donne.</b> Le Donneur mélange et donne 4 cartes à chacun, face cachée.</li>
 <li><b>La table.</b> Il pose des cartes face visible, toutes au Souk (4 à deux joueurs, 6 à trois ou quatre). La Médina est vide.</li>
 <li><b>Le paquet du Donneur.</b> Il met de côté les cartes des distributions. Tout le reste est <b>écarté</b>, face cachée, sans être regardé.</li>
 <li><b>La Réserve</b> (modules Échanges et Baroud). Il prélève 5 cartes sur les écartées (1 seule à quatre joueurs) et les pose à part, face cachée, près de lui. Voir l’onglet « Échanges ».</li>
-<li><b>Les jetons.</b> Banque au centre, jeton Moul Souk au centre, jetons de couleur devant chacun. Tout le monde part de zéro.</li></ol>
+<li><b>Les jetons.</b> Banque au centre, jeton Moul Souk au centre, <b>6 jetons de couleur</b> devant chacun. Tout le monde part de zéro.</li></ol>
 <h3>Un tour</h3>
 <ol><li><b>Sélection.</b> Je choisis ma carte en secret.</li>
 <li><b>Pose en zone neutre.</b> « 3, 2, 1 » : je pose ma carte, face cachée, sur la zone neutre. Elle est alors <b>scellée</b>.</li>
@@ -3101,6 +3135,11 @@ const MAN_TABS=[
 <h3>Jeu défensif en Médina</h3>
 <p>Capturer la carte libre d’un adversaire en Médina ne rapporte rien, mais lui coûte sa Ronda en préparation.</p>
 <div class="note">Vous avez une Ronda en place et un autre joueur a déjà posé une carte de même valeur en Médina : votre 4ᵉ carte la capture. <b>Les deux cartes sortent du jeu et la Tringa n’est pas complétée</b> ; votre paire reste au coin Ronda. Avec le module Échanges, c’est vrai aussi quand cette carte est jouée au même tour : l’échange a lieu et les deux cartes sortent.</div>
+<h3>Vos jetons de couleur</h3>
+<ul><li>Vous avez <b>6 jetons</b>. Chaque carte libre que vous posez en <b>Médina</b> reçoit l’un de vos jetons (au Souk, aucun jeton).</li>
+<li>Le nombre de jetons qu’il vous reste s’affiche à côté de votre nom (la pastille dorée).</li>
+<li>La paire d’une Ronda garde son jeton au coin Ronda. Le jeton vous revient quand sa carte est capturée, ou quand la Tringa est annoncée.</li>
+<li><b>Si vos 6 jetons sont tous en service</b>, la carte libre que vous posez en Médina reste <b>sans jeton</b> : elle ne peut pas former de Ronda. Si un joueur la capture, elle sort du jeu comme toute capture en Médina.</li></ul>
 <h3>Distributions du Donneur</h3>
 <p>Aux tours indiqués par le format, le Donneur donne 2 cartes à chaque joueur, prises dans son paquet. Personne ne se sert seul.</p>
 <h3>Fin de manche : le décompte</h3>
@@ -3170,24 +3209,25 @@ const MAN_TABS=[
 <p>+5 en duel Standard et en 2 contre 2, +4 à quatre joueurs sans Baroud, +3 à trois joueurs.</p>`},
  {id:'baroud',t:'Baroud',h:`
 <h3>Huit cartes d’action : les 8 et les 9</h3>
+<p class="note">Noms simples : <b>Premier</b> (Zerba), <b>Dernier</b> (Sber), <b>Encore</b> (Aoud), <b>Indice</b> (Fal), <b>Contre</b> (Qontra), <b>Vol</b> (Khatf), <b>Pari</b> (Kelma) et <b>Bouclier</b> (Hjab, le voile, qui remplace le Chergui).</p>
 <p>Ce sont les 8 et les 9 du jeu français, écartés hors Baroud. Chaque joueur en reçoit, et les joue <b>glissées sous sa carte du tour</b> (une seule par tour), face cachée jusqu’à la révélation.</p>
 <table><tr><th>Carte</th><th>Effet</th></tr>
-<tr><td><b>Hâte</b> · 8♣</td><td>Tu résous en premier.</td></tr>
-<tr><td><b>Patience</b> · 8♥</td><td>Tu résous en dernier.</td></tr>
+<tr><td><b>Premier</b> · 8♣</td><td>Tu résous en premier.</td></tr>
+<tr><td><b>Dernier</b> · 8♥</td><td>Tu résous en dernier.</td></tr>
 <tr><td><b>Contre</b> · 8♠</td><td>Annule la carte Baroud adverse (se résout avant tout). Deux Contre qui se visent s’annulent.</td></tr>
-<tr><td><b>Parole</b> · 8♦</td><td>Annonce une valeur (pas au dernier tour). Capture-la plus tard : +1 (à trois : +3). Sinon l’adversaire marque +2 (à trois : +1 chacun).</td></tr>
+<tr><td><b>Pari</b> · 8♦</td><td>Annonce une valeur (pas au dernier tour). Capture-la plus tard : +1 (à trois : +3). Sinon l’adversaire marque +2 (à trois : +1 chacun).</td></tr>
 <tr><td><b>Encore</b> · 9♣</td><td>Deux cartes ce tour, +1 carte de la Réserve.</td></tr>
-<tr><td><b>Présage</b> · 9♥</td><td>Regarde 3 cartes écartées.</td></tr>
-<tr><td><b>Rafle</b> · 9♠</td><td>Après ta carte, prends une carte libre du plateau (jamais une carte d’échange).</td></tr>
-<tr><td><b>Vent</b> · 9♦</td><td>En fin de tour (pas au dernier), toutes les cartes libres d’une zone glissent vers l’autre.</td></tr></table>
+<tr><td><b>Indice</b> · 9♥</td><td>Regarde 3 cartes écartées.</td></tr>
+<tr><td><b>Vol</b> · 9♠</td><td>Après ta carte, prends une carte libre du plateau (jamais une carte d’échange).</td></tr>
+<tr><td><b>Bouclier</b> · 9♦ <small>(le voile)</small></td><td>Pas au dernier tour. Pose-la sur une carte libre déjà en place (Souk ou Médina) : jusqu’à la fin du tour, elle ne peut être ni capturée (par personne, toi compris), ni prise par un Vol ; une chaîne s’arrête avant elle. Rien ne bouge. Impossible sur une carte jouée ce tour, une pile ou une paire garée. Contre l’éteint.</td></tr></table>
 <h3>Baroud et mèches</h3>
-<ul><li>En duel : 2 cartes Baroud chacun et 3 jetons de poudre. Une mèche se paie avec ses jetons, dans la <b>Poudrière</b> : Encore 1, Rafle 1, Vent 1, les autres sont gratuites. Une carte Baroud impayable ne peut pas être jouée.</li>
+<ul><li>En duel : 2 cartes Baroud chacun et 3 jetons de poudre. Une mèche se paie avec ses jetons, dans la <b>Poudrière</b> : Encore 1 et Vol 1, les autres sont gratuites (Bouclier compris). Une carte Baroud impayable ne peut pas être jouée.</li>
 <li>Fin de manche : le plus riche prend la Poudrière. Égalité : le pot est reporté.</li>
-<li>Parole est évaluée au décompte, avant le Moul Souk.</li>
+<li>Pari est évalué au décompte, avant le Moul Souk.</li>
 <li>La Réserve de 5 cartes est toujours mise en place avec le Baroud (pour Encore) : voir « Échanges ».</li></ul>
 <h3>À trois et à quatre</h3>
-<ul><li><b>À trois.</b> 1 carte chacune parmi les 8, 3 jetons de poudre, Poudrière. Mèches : Rafle 2, Encore 1, Présage 1, Vent 1. Contre vise la carte d’un adversaire au choix.</li>
-<li><b>À quatre.</b> 6 cartes (sans Encore ni Présage), 1 chacune, mèches gratuites, pas de Poudrière. Parole : +1 si tenue, +2 à chaque adversaire sinon.</li>
+<ul><li><b>À trois.</b> 1 carte chacune parmi les 8, 3 jetons de poudre, Poudrière. Mèches : Vol 2, Encore 1, Indice 1, les autres gratuites. Contre vise la carte d’un adversaire au choix.</li>
+<li><b>À quatre.</b> 6 cartes (sans Encore ni Indice), 1 chacune, mèches gratuites, pas de Poudrière. Pari : +1 si tenue, +2 à chaque adversaire sinon.</li>
 <li>Moul Souk : il garde la valeur du jeu de base avec le Baroud.</li></ul>`},
  {id:'multi',t:'À plusieurs',h:`
 <h3>À trois ou à quatre joueurs</h3>
@@ -3499,8 +3539,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){const m=document.ge
     if(/prend l’échange/.test(t))return S.play('cry',1);
     if(/Poudr/.test(t))return S.play('powder');
     if(/Contre/.test(t))return S.play('qontra');
-    if(/Parole/.test(t))return S.play('kelma');
-    if(/Hâte|Patience|Encore|Présage|Rafle|Vent/.test(t))return S.play('baroud');
+    if(/Pari/.test(t))return S.play('kelma');
+    if(/Premier|Dernier|Encore|Indice|Vol|Bouclier/.test(t))return S.play('baroud');
     if(/distribue|Refresh|donne/.test(t))return S.play('deal');
   };
   const wrap=(name,fn)=>{if(typeof window[name]!=='function')return;const o=window[name];window[name]=fn(o);};
@@ -3592,9 +3632,9 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){const m=document.ge
     try{
       await beat(650+Math.random()*700);
       if(stopped(t))return;
-      UI.sel=null;UI.sel2=null;UI.bar=null;UI.kv=null;UI.picked=null;
+      UI.sel=null;UI.sel2=null;UI.bar=null;UI.kv=null;UI.vt=null;UI.picked=null;
       if(skin&&UI.stage!=='pick')UI.stage='pick';
-      if(pay.bar){UI.bar=pay.bar;UI.kv=pay.kv||null;render();await beat(550);if(stopped(t))return;}
+      if(pay.bar){UI.bar=pay.bar;UI.kv=pay.kv||null;UI.vt=pay.vt||null;render();await beat(550);if(stopped(t))return;}
       for(let i=0;i<pay.cards.length;i++){
         const c=pay.cards[i];
         if(skin)Tselect(c.card.id);
@@ -3614,14 +3654,14 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){const m=document.ge
     }catch(e){if(e!==ABORT)console.error(e);}
     finally{driving=false;}
   }
-  /* si l'auto est activé pendant une demande de choix (cible, zone, enchère, Présage) ou un « Suivant », il répond à la place du joueur */
+  /* si l'auto est activé pendant une demande de choix (cible, zone, enchère, Indice) ou un « Suivant », il répond à la place du joueur */
   function resume(){
     try{
       if(!active())return;
       let b;
       if(UI.pick&&UI.pick.res){const T=UI.pick.list,t=botKhatfTarget(0,T)||T[0],r=UI.pick.res;UI.pick=null;UI.pickMsg='';r(t);return;}
-      if((b=document.getElementById('cz1'))){(botChergui(0)==='S'?b:document.getElementById('cz2')).click();return;}
       if((b=document.getElementById('falOk'))){b.click();return;}
+      if((b=document.querySelector('[data-vi]'))){b.click();return;}
       if((b=document.querySelector('[data-q]'))){b.click();return;}
       if(document.getElementById('xYes')){(botEscalate(multi?0:true)?document.getElementById('xYes'):document.getElementById('xNo')).click();return;}
       if(document.querySelector('#expl.wait')&&window.PACE)PACE.go();
@@ -3641,9 +3681,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){const m=document.ge
   const wrap=(name,fn)=>{if(typeof window[name]!=='function')return;const o=window[name];window[name]=function(){return active()?fn.apply(this,arguments):o.apply(this,arguments);};};
   wrap('promptEscalate',()=>Promise.resolve(multi?botEscalate(0):botEscalate(true)));
   wrap('pickTarget',(T)=>Promise.resolve(botKhatfTarget(0,T)||T[0]));
-  wrap('chooseZone',()=>Promise.resolve(botChergui(0)));
   wrap('chooseQontra',(cands)=>Promise.resolve(botQontraTarget(0,cands)));
-  wrap('showFal',async()=>{await banner('Présage !','bot',700);});
+  wrap('showFal',async()=>{await banner('Indice !','bot',700);});
   wrap('Tguide',async()=>{});
   /* fin de manche : la suite démarre toute seule après la lecture du récapitulatif */
   const _os=openSheet;
